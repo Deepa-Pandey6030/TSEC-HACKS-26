@@ -1,10 +1,12 @@
 """
 Authentication routes for user login/signup
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from fastapi.responses import JSONResponse
 import logging
 import uuid
+from typing import Optional
+from pydantic import BaseModel
 
 from app.models.user import UserCreate, UserLogin, UserResponse, LoginResponse
 from app.db.user_db import MongoUserDB
@@ -13,6 +15,11 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Auth"])
+
+
+class LogoutRequest(BaseModel):
+    """Request body for logout endpoint."""
+    session_token: Optional[str] = None
 
 # Initialize MongoDB lazily (only when first needed)
 user_db = None
@@ -160,16 +167,25 @@ async def get_me(session_token: str = None):
 
 
 @router.post("/logout")
-async def logout(session_token: str = None):
+async def logout(request: LogoutRequest, authorization: Optional[str] = Header(None)):
     """Logout user by removing session."""
+    session_token = request.session_token
+    
+    # Try to get token from Authorization header if not in body
+    if not session_token and authorization:
+        # Extract token from "Bearer <token>" format
+        if authorization.startswith("Bearer "):
+            session_token = authorization[7:]
+    
     if not session_token:
         raise HTTPException(status_code=400, detail="No session token provided")
     
     if session_token in active_sessions:
         del active_sessions[session_token]
         logger.info("✅ User logged out")
-    
-    return {"success": True, "message": "Logged out successfully"}
+        return {"success": True, "message": "Logged out successfully"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid or expired session token")
 
 
 @router.post("/check-session")
