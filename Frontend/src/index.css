@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* CSS Custom Properties for shadows (set by theme provider) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.2), 0 10px 20px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(0, 217, 255, 0.3), 0 0 40px rgba(0, 217, 255, 0.1);
+}
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .shadow-custom-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .shadow-custom-md {
+    box-shadow: var(--shadow-md);
+  }
+  
+  .shadow-custom-lg {
+    box-shadow: var(--shadow-lg);
+  }
+  
+  .shadow-custom-xl {
+    box-shadow: var(--shadow-xl);
+  }
+  
+  .shadow-custom-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  
+  /* Glassmorphism backdrop effect */
+  .glass {
+    @apply bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-700/50;
+  }
+
+  .glass-strong {
+    @apply bg-white/90 dark:bg-neutral-900/90 backdrop-blur-2xl;
+  }
+}
+
+/* Animation keyframes */
+@keyframes gradient-sweep {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Enhanced focus styles */
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-neutral-900;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100 dark:bg-neutral-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 dark:bg-neutral-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400 dark:bg-neutral-500;
+}
