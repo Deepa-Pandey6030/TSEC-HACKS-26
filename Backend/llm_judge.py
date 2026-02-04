@@ -3,10 +3,12 @@ import json
 from dotenv import load_dotenv
 from groq import Groq
 
+# Load environment variables FIRST
 load_dotenv()
 
+# Now create the client with the loaded environment variable
 client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
+    api_key=os.getenv("XAI_API_KEY") or os.getenv("GROQ_API_KEY")
 )
 
 # --- FUNCTION 1: DYNAMIC EXTRACTION (NEW) ---

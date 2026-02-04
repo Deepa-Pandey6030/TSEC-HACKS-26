@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 // Added FileCheck for the validator icon
-import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck } from 'lucide-react';
+import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles } from 'lucide-react';
 import { ThemeProvider, useTheme } from './lib/theme-provider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HomePage } from './pages/home';
@@ -31,8 +31,9 @@ function Navigation() {
     { path: '/', label: 'Home', icon: Home },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/products', label: 'Products', icon: Package },
+    { path: '/creative-assistant', label: 'AI Assistant', icon: Sparkles },
     // FIXED: Added icon and completed the object
-    { path: '/validator', label: 'Validate', icon: FileCheck } 
+    { path: '/validator', label: 'Validate', icon: FileCheck }
   ];
 
   const handleLogout = () => {
@@ -282,7 +283,7 @@ function AppContent() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/validator" element={<ContinuityValidator />} />
-
+          <Route path="/creative-assistant" element={<CreativeAssistantPage />} />
         </Routes>
       </motion.main>
 
