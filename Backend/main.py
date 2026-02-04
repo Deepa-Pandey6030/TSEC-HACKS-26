@@ -65,9 +65,9 @@ async def health_check():
     }
 
 
-# Import and include routers here
-# from app.api import reasoning_router
-# app.include_router(reasoning_router, prefix="/api/v1/reasoning", tags=["reasoning"])
+# Import and include routers
+from app.api import creative_assistant_router
+app.include_router(creative_assistant_router)
 
 
 if __name__ == "__main__":

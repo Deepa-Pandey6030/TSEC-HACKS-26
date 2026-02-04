@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User } from 'lucide-react';
 import { ThemeProvider, useTheme } from './lib/theme-provider';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { HomePage } from './pages/Home';
+import { HomePage } from './pages/home';
 import { ProductListPage } from './pages/product-list';
+import { CreativeAssistantPage } from './pages/creative-assistant';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
@@ -276,6 +277,7 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductListPage />} />
+          <Route path="/creative-assistant" element={<CreativeAssistantPage />} />
         </Routes>
       </motion.main>
 
@@ -330,8 +332,8 @@ function AppContent() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 300 }}
               className={`px-4 py-3 rounded-lg shadow-lg ${notification.type === 'success' ? 'bg-green-500' :
-                  notification.type === 'error' ? 'bg-red-500' :
-                    'bg-blue-500'
+                notification.type === 'error' ? 'bg-red-500' :
+                  'bg-blue-500'
                 } text-white`}
             >
               {notification.message}

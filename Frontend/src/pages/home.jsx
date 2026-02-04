@@ -6,6 +6,13 @@ import { useTheme } from '../lib/theme-provider';
 
 const features = [
   {
+    image: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=800',
+    title: 'AI Creative Assistant',
+    meta: 'NOLAN SYSTEM',
+    description: 'Senior Writer AI with 30+ years of experience provides intelligent creative guidance, analyzes narrative health, and suggests improvements for your story.',
+    link: '/creative-assistant'
+  },
+  {
     image: 'https://images.pexels.com/photos/8728382/pexels-photo-8728382.jpeg?auto=compress&cs=tinysrgb&w=800',
     title: 'Predictive Misinformation Modeling',
     meta: 'AI AGENTS',
@@ -73,7 +80,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-primary-50/30 to-secondary-50/30 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900">
       <Hero />
-      
+
       <section className="py-24 px-6">
         <div className="container mx-auto">
           <motion.div
@@ -112,6 +119,7 @@ export function HomePage() {
                   title={feature.title}
                   meta={feature.meta}
                   description={feature.description}
+                  link={feature.link}
                 />
               </motion.div>
             ))}

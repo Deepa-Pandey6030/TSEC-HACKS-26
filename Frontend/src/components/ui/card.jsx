@@ -1,11 +1,12 @@
 import React, { forwardRef, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, ExternalLink, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import { useTheme } from '../../lib/theme-provider';
 
 export const Card = forwardRef(
-  ({ className, image, title, meta, description, href, actions = true, children, ...props }, ref) => {
+  ({ className, image, title, meta, description, href, link, actions = true, children, ...props }, ref) => {
     const { isReducedMotion } = useTheme();
     const [isHovered, setIsHovered] = useState(false);
     const cardRef = useRef(null);
@@ -14,15 +15,15 @@ export const Card = forwardRef(
 
     const handleMouseMove = (e) => {
       if (isReducedMotion || !cardRef.current) return;
-      
+
       const rect = cardRef.current.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
-      
+
       const maxTilt = 8;
       const tiltX = ((e.clientY - centerY) / (rect.height / 2)) * -maxTilt;
       const tiltY = ((e.clientX - centerX) / (rect.width / 2)) * maxTilt;
-      
+
       setRotateX(tiltX);
       setRotateY(tiltY);
     };
@@ -34,13 +35,13 @@ export const Card = forwardRef(
     };
 
     const cardVariants = {
-      initial: { 
-        scale: 1, 
+      initial: {
+        scale: 1,
         y: 0,
         rotateX: 0,
         rotateY: 0
       },
-      hover: { 
+      hover: {
         scale: isReducedMotion ? 1 : 1.03,
         y: isReducedMotion ? 0 : -6,
         rotateX: isReducedMotion ? 0 : rotateX,
@@ -60,8 +61,8 @@ export const Card = forwardRef(
 
     const actionVariants = {
       initial: { y: 20, opacity: 0 },
-      hover: { 
-        y: 0, 
+      hover: {
+        y: 0,
         opacity: 1,
         transition: {
           type: "spring",
@@ -86,7 +87,7 @@ export const Card = forwardRef(
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
-        style={{ 
+        style={{
           perspective: 1000,
           transformStyle: "preserve-3d"
         }}
@@ -116,7 +117,7 @@ export const Card = forwardRef(
         {/* Image */}
         {image && (
           <div className="relative overflow-hidden">
-            <img 
+            <img
               src={image}
               alt={title || ''}
               className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
@@ -131,13 +132,13 @@ export const Card = forwardRef(
               {meta}
             </p>
           )}
-          
+
           {title && (
             <h3 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-3 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {title}
             </h3>
           )}
-          
+
           {description && (
             <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed mb-4">
               {description}
@@ -171,15 +172,15 @@ export const Card = forwardRef(
                   <ExternalLink size={16} />
                 </motion.button>
               </div>
-              
+
               <motion.div
                 className="flex items-center text-primary-600 dark:text-primary-400 font-medium cursor-pointer group/arrow"
                 whileHover={{ x: isReducedMotion ? 0 : 4 }}
               >
                 <span className="mr-2">View Details</span>
-                <ArrowRight 
-                  size={16} 
-                  className="transition-transform group-hover/arrow:translate-x-1" 
+                <ArrowRight
+                  size={16}
+                  className="transition-transform group-hover/arrow:translate-x-1"
                 />
               </motion.div>
             </motion.div>
@@ -188,8 +189,17 @@ export const Card = forwardRef(
       </motion.div>
     );
 
+    // Support both internal links (React Router) and external hrefs
+    if (link) {
+      return (
+        <Link to={link} className="block">
+          {CardContent}
+        </Link>
+      );
+    }
+
     return href ? (
-      <a href={href} className="block">
+      <a href={href} className="block" target="_blank" rel="noopener noreferrer">
         {CardContent}
       </a>
     ) : CardContent;
