@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGrammarCheck } from '../hooks/useGrammarCheck';
+import GrammarOverlay from '../components/Editor/GrammarOverlay';
 
 // Simple Icons (SVG) to avoid external dependencies like lucide-react
 const Icons = {
@@ -23,6 +25,7 @@ const ContinuityValidator = () => {
   const [text, setText] = useState(""); 
   const [alerts, setAlerts] = useState([]);
   const [status, setStatus] = useState("idle");
+  const { matches, setMatches } = useGrammarCheck(text);
 
   const simulateExtraction = () => {
     return {
@@ -31,6 +34,16 @@ const ContinuityValidator = () => {
       // Logic handled by backend now, but structure kept for compatibility
       characters: [] 
     };
+  };
+
+  const handleApplyGrammarFix = (match, replacement) => {
+    const prefix = text.slice(0, match.offset);
+    const suffix = text.slice(match.offset + match.length);
+    const newText = prefix + replacement + suffix;
+    setText(newText);
+
+    // Remove the fixed match locally to update UI instantly
+    setMatches(prev => prev.filter(m => m.offset !== match.offset));
   };
 
   const validateChapter = async () => {
@@ -110,12 +123,24 @@ const ContinuityValidator = () => {
               </div>
 
               {/* Text Area */}
-              <textarea 
-                className="w-full h-[400px] bg-transparent border-none text-gray-300 font-mono text-base resize-none focus:ring-0 outline-none placeholder-gray-700 leading-relaxed"
-                placeholder="Paste your scene text here..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
+              <div className="relative">
+                <GrammarOverlay
+                  text={text}
+                  matches={matches}
+                  onApplyFix={handleApplyGrammarFix}
+                />
+                <textarea 
+                  className="relative z-10 w-full h-[400px] bg-transparent border-none text-gray-300 font-mono text-base resize-none focus:ring-0 outline-none placeholder-gray-700 leading-relaxed"
+                  placeholder="Paste your scene text here..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '1rem',
+                    lineHeight: '1.6'
+                  }}
+                />
+              </div>
               
               {/* Action Bar */}
               <div className="mt-6 flex justify-end pt-4 border-t border-white/5">

@@ -6,6 +6,9 @@ import {
     CheckCircle2, AlertCircle, Activity, Zap, Eye
 } from 'lucide-react';
 import { useTheme } from '../lib/theme-provider';
+import { useGrammarCheck } from '../hooks/useGrammarCheck';
+import GrammarOverlay from '../components/Editor/GrammarOverlay';
+import LineGutter from '../components/Editor/LineGutter';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -39,6 +42,19 @@ export function CreativeAssistantPage() {
     const [predictiveRisks, setPredictiveRisks] = useState(null);
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
+
+    // Grammar Checking Integration
+    const { matches, isChecking: isGrammarChecking, setMatches } = useGrammarCheck(content);
+
+    const handleApplyGrammarFix = (match, replacement) => {
+        const prefix = content.slice(0, match.offset);
+        const suffix = content.slice(match.offset + match.length);
+        const newContent = prefix + replacement + suffix;
+        setContent(newContent);
+
+        // Remove the fixed match locally to update UI instantly
+        setMatches(prev => prev.filter(m => m.offset !== match.offset));
+    };
 
     // Handle text selection for floating toolbar
     const handleTextSelection = () => {
@@ -437,76 +453,84 @@ export function CreativeAssistantPage() {
                             </div>
 
                             {/* Editor */}
-                            <div className="p-8">
-                                <textarea
-                                    ref={editorRef}
-                                    value={content}
-                                    onChange={(e) => setContent(e.target.value)}
-                                    placeholder="Start writing… Nolan is reviewing your work."
-                                    className="w-full min-h-[500px] bg-transparent border-none outline-none text-neutral-900 dark:text-neutral-100 text-lg leading-relaxed resize-none placeholder-neutral-400 focus:placeholder-neutral-300"
-                                    style={{ fontFamily: 'Georgia, serif' }}
-                                />
-
-                                {/* Keep/Undo Controls */}
-                                <AnimatePresence>
-                                    {showKeepUndoControls && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 20 }}
-                                            className="mt-6 flex items-center justify-center gap-4"
-                                        >
-                                            <motion.button
-                                                onClick={handleKeepChanges}
-                                                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <CheckCircle2 size={20} />
-                                                Keep Changes
-                                            </motion.button>
-
-                                            <motion.button
-                                                onClick={handleUndoChanges}
-                                                className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                            >
-                                                <AlertCircle size={20} />
-                                                Undo Changes
-                                            </motion.button>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                            <div className="relative pl-12 flex">
+                                <LineGutter content={content} />
+                                <div className="relative flex-1 p-8">
+                                    <GrammarOverlay
+                                        text={content}
+                                        matches={matches}
+                                        onApplyFix={handleApplyGrammarFix}
+                                    />
+                                    <textarea
+                                        ref={editorRef}
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                        placeholder="Start writing… Nolan is reviewing your work."
+                                        className="w-full min-h-[500px] bg-transparent border-none outline-none text-neutral-900 dark:text-neutral-100 text-lg leading-relaxed resize-none placeholder-neutral-400 focus:placeholder-neutral-300 relative z-10"
+                                        style={{ fontFamily: 'Georgia, serif' }}
+                                    />
+                                </div>
                             </div>
 
-                            {/* Floating Selection Toolbar */}
+                            {/* Keep/Undo Controls */}
                             <AnimatePresence>
-                                {selectedText && selectionPosition && (
+                                {showKeepUndoControls && (
                                     <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                        className="fixed z-50 bg-neutral-900 dark:bg-neutral-800 rounded-lg shadow-2xl border border-neutral-700 px-2 py-2 flex items-center gap-1"
-                                        style={{
-                                            top: selectionPosition.top,
-                                            left: selectionPosition.left,
-                                            transform: 'translateX(-50%)'
-                                        }}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 20 }}
+                                        className="pb-8 flex items-center justify-center gap-4"
                                     >
-                                        <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
-                                            <Sparkles size={14} /> Improve
-                                        </button>
-                                        <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
-                                            <Wand2 size={14} /> Tone
-                                        </button>
-                                        <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
-                                            <Eye size={14} /> Explain
-                                        </button>
+                                        <motion.button
+                                            onClick={handleKeepChanges}
+                                            className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <CheckCircle2 size={20} />
+                                            Keep Changes
+                                        </motion.button>
+
+                                        <motion.button
+                                            onClick={handleUndoChanges}
+                                            className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <AlertCircle size={20} />
+                                            Undo Changes
+                                        </motion.button>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </div>
+
+                        {/* Floating Selection Toolbar */}
+                        <AnimatePresence>
+                            {selectedText && selectionPosition && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                    className="fixed z-50 bg-neutral-900 dark:bg-neutral-800 rounded-lg shadow-2xl border border-neutral-700 px-2 py-2 flex items-center gap-1"
+                                    style={{
+                                        top: selectionPosition.top,
+                                        left: selectionPosition.left,
+                                        transform: 'translateX(-50%)'
+                                    }}
+                                >
+                                    <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
+                                        <Sparkles size={14} /> Improve
+                                    </button>
+                                    <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
+                                        <Wand2 size={14} /> Tone
+                                    </button>
+                                    <button className="px-3 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded text-white text-sm flex items-center gap-1 transition-colors">
+                                        <Eye size={14} /> Explain
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Insight Panel (RIGHT) */}
@@ -616,7 +640,7 @@ export function CreativeAssistantPage() {
                                 >
                                     <Sparkles size={16} />
                                 </motion.div>
-                                Analyzing...
+                                AI Predicting Future Impact...
                             </>
                         ) : (
                             <>
@@ -666,7 +690,7 @@ export function CreativeAssistantPage() {
                                 >
                                     <TrendingUp size={16} />
                                 </motion.div>
-                                Improving...
+                                Improving Flow ({flowTone})...
                             </>
                         ) : (
                             <>

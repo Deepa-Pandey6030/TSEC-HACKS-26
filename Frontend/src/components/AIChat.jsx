@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Minimize2, Bot, User } from 'lucide-react';
 import api from '../services/api';
 import { useTheme } from '../context/AuthContext'; // Changed from ThemeContext
+import { useGrammarCheck } from '../hooks/useGrammarCheck';
+import GrammarOverlay from './Editor/GrammarOverlay';
 
 const AIChat = ({ showChat, setShowChat, addNotification }) => {
   const [messages, setMessages] = useState([
@@ -17,10 +19,21 @@ const AIChat = ({ showChat, setShowChat, addNotification }) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const { theme } = useTheme();
+  const { matches, setMatches } = useGrammarCheck(inputText);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleApplyGrammarFix = (match, replacement) => {
+    const prefix = inputText.slice(0, match.offset);
+    const suffix = inputText.slice(match.offset + match.length);
+    const newText = prefix + replacement + suffix;
+    setInputText(newText);
+
+    // Remove the fixed match locally to update UI instantly
+    setMatches(prev => prev.filter(m => m.offset !== match.offset));
+  };
 
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
@@ -199,13 +212,18 @@ const AIChat = ({ showChat, setShowChat, addNotification }) => {
       <div className={`${theme === 'dark' ? 'border-cyan-400/20 bg-gradient-to-r from-slate-800/50 to-slate-900/50' : 'border-offWhite bg-white'} p-4 border-t`}>
         <div className="flex items-center space-x-3">
           <div className="flex-1 relative">
+            <GrammarOverlay
+              text={inputText}
+              matches={matches}
+              onApplyFix={handleApplyGrammarFix}
+            />
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Share what's on your mind..."
               rows={1}
-              className={`${theme === 'dark' ? 'bg-slate-700/50 border-cyan-400/30 text-white placeholder-gray-400 focus:border-cyan-400 focus:ring-cyan-400/20' : 'bg-white border-offWhite text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20'} w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 resize-none`}
+              className={`relative z-10 ${theme === 'dark' ? 'bg-slate-700/50 border-cyan-400/30 text-white placeholder-gray-400 focus:border-cyan-400 focus:ring-cyan-400/20' : 'bg-white border-offWhite text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500/20'} w-full border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 resize-none`}
               style={{ minHeight: '40px', maxHeight: '120px' }}
             />
           </div>
