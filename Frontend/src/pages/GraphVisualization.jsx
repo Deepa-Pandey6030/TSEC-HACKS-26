@@ -30,23 +30,43 @@ export default function GraphVisualization() {
 
             const data = await response.json();
 
+            // Log the raw data to verify all attributes are received
+            console.log('📊 Graph Data Received:', {
+                nodeCount: data.nodes.length,
+                edgeCount: data.edges.length,
+                sampleNode: data.nodes[0]
+            });
+
             // Transform API data to force-graph format
-            const nodes = data.nodes.map(node => ({
-                id: node.id,
-                name: node.name,
-                type: node.type,
-                properties: node.properties,
-                color: getNodeColor(node.type),
-                size: node.type === 'Character' ? 8 : 6
-            }));
+            const nodes = data.nodes.map(node => {
+                // Log each node's properties to verify all attributes
+                console.log(`Node "${node.name}" properties:`, Object.keys(node.properties || {}));
+
+                return {
+                    id: node.id,
+                    name: node.name,
+                    type: node.type,
+                    properties: node.properties || {},
+                    first_appearance: node.first_appearance,
+                    last_appearance: node.last_appearance,
+                    color: getNodeColor(node.type),
+                    size: node.type === 'Character' ? 8 : 6
+                };
+            });
 
             const links = data.edges.map(edge => ({
                 source: nodes.find(n => n.name === edge.source)?.id || edge.source,
                 target: nodes.find(n => n.name === edge.target)?.id || edge.target,
                 type: edge.type,
-                properties: edge.properties,
+                properties: edge.properties || {},
                 label: edge.type
             }));
+
+            console.log('✅ Graph transformed:', {
+                nodes: nodes.length,
+                links: links.length,
+                allProperties: [...new Set(nodes.flatMap(n => Object.keys(n.properties)))]
+            });
 
             setGraphData({ nodes, links });
             setStats(data.metadata);
@@ -288,61 +308,22 @@ export default function GraphVisualization() {
                                     ctx.fillStyle = '#000';
                                     ctx.fillText(label, node.x, node.y - node.size - fontSize / 2);
                                 }}
-                                linkLabel="label"
-                                linkDirectionalArrowLength={3.5}
+                                linkLabel={link => link.label || link.type || ''}
+                                linkDirectionalArrowLength={4}
                                 linkDirectionalArrowRelPos={1}
-                                linkCurvature={0.25}
-                                linkCanvasObjectMode={() => 'after'}
-                                linkCanvasObject={(link, ctx, globalScale) => {
-                                    const MAX_FONT_SIZE = 4;
-                                    const LABEL_NODE_MARGIN = 1.5;
-
-                                    const start = link.source;
-                                    const end = link.target;
-
-                                    // Ignore unbound links
-                                    if (typeof start !== 'object' || typeof end !== 'object') return;
-
-                                    // Calculate label positioning
-                                    const textPos = Object.assign(...['x', 'y'].map(c => ({
-                                        [c]: start[c] + (end[c] - start[c]) / 2
-                                    })));
-
-                                    const relLink = { x: end.x - start.x, y: end.y - start.y };
-                                    const maxTextLength = Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
-
-                                    let textAngle = Math.atan2(relLink.y, relLink.x);
-                                    // Maintain label vertical orientation for legibility
-                                    if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
-                                    if (textAngle < -Math.PI / 2) textAngle = -(-Math.PI - textAngle);
-
-                                    const label = link.label || link.type || '';
-
-                                    // Estimate fontSize to fit in link length
-                                    ctx.font = '1px Sans-Serif';
-                                    const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / ctx.measureText(label).width);
-                                    ctx.font = `${fontSize}px Sans-Serif`;
-                                    const textWidth = ctx.measureText(label).width;
-                                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
-
-                                    // Draw text label background
-                                    ctx.save();
-                                    ctx.translate(textPos.x, textPos.y);
-                                    ctx.rotate(textAngle);
-
-                                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                                    ctx.fillRect(-bckgDimensions[0] / 2, -bckgDimensions[1] / 2, ...bckgDimensions);
-
-                                    // Draw text label
-                                    ctx.textAlign = 'center';
-                                    ctx.textBaseline = 'middle';
-                                    ctx.fillStyle = '#6b7280';
-                                    ctx.fillText(label, 0, 0);
-                                    ctx.restore();
-                                }}
+                                linkCurvature={0.1}
+                                linkDirectionalParticles={1}
+                                linkDirectionalParticleWidth={2}
+                                linkDirectionalParticleSpeed={0.005}
                                 onNodeClick={handleNodeClick}
+                                onLinkClick={(link) => {
+                                    const source = typeof link.source === 'object' ? link.source.name : link.source;
+                                    const target = typeof link.target === 'object' ? link.target.name : link.target;
+                                    alert(`Relationship: ${link.type}\n\nFrom: ${source}\nTo: ${target}`);
+                                }}
                                 backgroundColor="#f9fafb"
-                                linkColor={() => '#9ca3af'}
+                                linkColor={() => '#6b7280'}
+                                linkWidth={1.5}
                             />
                         </div>
                     </motion.div>
@@ -355,21 +336,70 @@ export default function GraphVisualization() {
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-6 bg-white dark:bg-neutral-800 rounded-2xl shadow-lg p-6"
                     >
-                        <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-4">
-                            {selectedNode.name}
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Type</p>
-                                <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{selectedNode.type}</p>
-                            </div>
-                            {selectedNode.properties && Object.entries(selectedNode.properties).map(([key, value]) => (
-                                <div key={key}>
-                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1 capitalize">{key.replace(/_/g, ' ')}</p>
-                                    <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{value}</p>
-                                </div>
-                            ))}
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+                                {selectedNode.name}
+                            </h3>
+                            <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm font-semibold">
+                                {selectedNode.type}
+                            </span>
                         </div>
+
+                        {/* Dynamic Properties Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {selectedNode.properties && Object.entries(selectedNode.properties)
+                                .filter(([key]) => !['name', 'manuscript_id'].includes(key)) // Filter out internal fields
+                                .map(([key, value]) => (
+                                    <div key={key} className="bg-neutral-50 dark:bg-neutral-700/50 rounded-lg p-4">
+                                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 uppercase tracking-wide">
+                                            {key.replace(/_/g, ' ')}
+                                        </p>
+                                        <p className="text-base font-semibold text-neutral-900 dark:text-neutral-100 break-words">
+                                            {value !== null && value !== undefined && value !== ''
+                                                ? String(value)
+                                                : <span className="text-neutral-400 italic">Not set</span>
+                                            }
+                                        </p>
+                                    </div>
+                                ))
+                            }
+
+                            {/* Show message if no additional properties */}
+                            {selectedNode.properties &&
+                                Object.keys(selectedNode.properties).filter(k => !['name', 'manuscript_id'].includes(k)).length === 0 && (
+                                    <div className="col-span-full text-center py-8 text-neutral-500 dark:text-neutral-400">
+                                        <Network className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                                        <p>No additional properties available</p>
+                                    </div>
+                                )}
+                        </div>
+
+                        {/* Appearance Info */}
+                        {(selectedNode.first_appearance || selectedNode.last_appearance) && (
+                            <div className="mt-6 pt-6 border-t border-neutral-200 dark:border-neutral-700">
+                                <h4 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300 mb-3">
+                                    Appearance Timeline
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {selectedNode.first_appearance && (
+                                        <div className="bg-neutral-50 dark:bg-neutral-700/50 rounded-lg p-3">
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">First Seen</p>
+                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                                {new Date(selectedNode.first_appearance).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {selectedNode.last_appearance && (
+                                        <div className="bg-neutral-50 dark:bg-neutral-700/50 rounded-lg p-3">
+                                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Last Seen</p>
+                                            <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                                {new Date(selectedNode.last_appearance).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </motion.div>
                 )}
 
