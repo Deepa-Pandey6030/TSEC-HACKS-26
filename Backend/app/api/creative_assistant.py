@@ -199,11 +199,85 @@ async def quick_analyze(request: QuickAnalyzeRequest):
     """
     Quick analysis endpoint with Predictive Plot Risk Analysis.
     Analyzes narrative structure and predicts future risks.
+    
+    NOW ENHANCED: Auto-fetches NLP extraction and Knowledge Graph context.
     """
     try:
         from app.services.creative_assistant.plot_risk_analyzer import PlotRiskAnalyzer
+        from app.services.nlp import EntityExtractor
+        from app.services.knowledge_graph import graph_db
         
         logger.info(f"Quick analyze with plot risk analysis: {request.story_title}")
+        
+        # Auto-extract NLP data from recent scene
+        nlp_data = {}
+        kg_data = {}
+        
+        try:
+            # Extract entities from scene text
+            entity_extractor = EntityExtractor()
+            manuscript_id = f"story_{request.story_title.lower().replace(' ', '_')}"
+            
+            extracted = await entity_extractor.extract(
+                text=request.recent_scene_summary,
+                metadata={
+                    "manuscript_id": manuscript_id,
+                    "scene_id": "latest",
+                    "paragraph": 0
+                },
+                context=[]
+            )
+            
+            logger.info(f"NLP extraction complete: {len(extracted.get('characters', []))} characters, "
+                       f"{len(extracted.get('locations', []))} locations")
+            
+            # Save to Knowledge Graph
+            graph_db.save_extracted_entities(
+                entities=extracted,
+                metadata={
+                    "manuscript_id": manuscript_id,
+                    "paragraph": 0
+                }
+            )
+            
+            # Query Knowledge Graph for context
+            with graph_db.driver.session() as session:
+                # Get character count
+                char_result = session.run("""
+                    MATCH (c:Character {manuscript_id: $mid})
+                    RETURN count(c) as count
+                """, mid=manuscript_id)
+                char_count = char_result.single()["count"] if char_result.single() else 0
+                
+                # Get location count
+                loc_result = session.run("""
+                    MATCH (l:Location {manuscript_id: $mid})
+                    RETURN count(l) as count
+                """, mid=manuscript_id)
+                loc_count = loc_result.single()["count"] if loc_result.single() else 0
+                
+                # Get relationships
+                rel_result = session.run("""
+                    MATCH (a:NarrativeEntity {manuscript_id: $mid})-[r]->(b:NarrativeEntity)
+                    RETURN count(r) as count
+                """, mid=manuscript_id)
+                rel_count = rel_result.single()["count"] if rel_result.single() else 0
+            
+            # Build KG data structure
+            kg_data = {
+                "character_count": char_count,
+                "location_count": loc_count,
+                "relationship_count": rel_count,
+                "characters": extracted.get("characters", []),
+                "locations": extracted.get("locations", []),
+                "relationships": extracted.get("relationships", [])
+            }
+            
+            logger.info(f"Knowledge Graph context: {char_count} characters, {loc_count} locations, {rel_count} relationships")
+            
+        except Exception as e:
+            logger.warning(f"NLP/KG extraction failed (non-critical): {e}")
+            # Continue with empty data - analysis will still work
         
         # Run predictive plot risk analysis
         plot_analyzer = PlotRiskAnalyzer()
@@ -214,9 +288,10 @@ async def quick_analyze(request: QuickAnalyzeRequest):
             completion_percentage=request.completion_percentage
         )
         
-        # Create minimal mock data for standard analysis
+        # Create enhanced mock data for standard analysis
         analysis_request = StoryAnalysisRequest(
             story_id=f"story_{request.story_title.lower().replace(' ', '_')}",
+            nlp_data=nlp_data,  # Now includes real NLP data
             knowledge_graph_data={
                 "story_metadata": {
                     "title": request.story_title,
@@ -226,7 +301,8 @@ async def quick_analyze(request: QuickAnalyzeRequest):
                     "target_word_count": 80000,
                     "current_act": 2 if request.completion_percentage > 30 else 1,
                     "total_acts": 3
-                }
+                },
+                **kg_data  # Merge in real KG data
             },
             recent_scenes=[{
                 "id": "scene_latest",
@@ -238,12 +314,13 @@ async def quick_analyze(request: QuickAnalyzeRequest):
         # Run standard analysis
         standard_analysis = await analyze_story(analysis_request)
         
-        # Enhance response with predictive risks
+        # Enhance response with predictive risks AND NLP/KG insights
         standard_analysis.predictive_risks = risk_analysis
         standard_analysis.risk_summary = risk_analysis.get("predictive_summary", "")
         standard_analysis.primary_risk = risk_analysis.get("primary_risk", "")
         
         logger.info(f"Analysis complete with risk scores: {risk_analysis.get('risk_scores', {})}")
+        logger.info(f"NLP/KG integration: {len(kg_data.get('characters', []))} characters extracted")
         
         return standard_analysis
         
