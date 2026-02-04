@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 // Added FileCheck for the validator icon
-import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles, Network } from 'lucide-react';
+import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles, Network, BookOpen } from 'lucide-react';
 import { ThemeProvider, useTheme } from './lib/theme-provider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HomePage } from './pages/home';
@@ -17,6 +17,7 @@ import AIChat from './components/AIChat';
 import { Button } from './components/ui/button';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import ContinuityValidator from './pages/ContinuityValidator';
+import ManuscriptPage from './pages/ManuscriptPage';
 import './utils/authDebug'; // Load auth test functions
 
 function Navigation({ isAutocompleteEnabled, setIsAutocompleteEnabled }) {
@@ -35,6 +36,7 @@ function Navigation({ isAutocompleteEnabled, setIsAutocompleteEnabled }) {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/products', label: 'Products', icon: Package },
     { path: '/creative-assistant', label: 'AI Assistant', icon: Sparkles },
+    { path: '/manuscript', label: 'Manuscript', icon: BookOpen },
     { path: '/validator', label: 'Validate', icon: FileCheck },
     { path: '/graph-view', label: 'Graph', icon: Network }
   ];
@@ -301,6 +303,7 @@ function AppContent() {
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/validator" element={<ContinuityValidator />} />
           <Route path="/creative-assistant" element={<CreativeAssistantPage isAutocompleteEnabled={isAutocompleteEnabled} />} />
+          <Route path="/manuscript" element={<ManuscriptPage />} />
           <Route path="/graph-view" element={<GraphVisualization />} />
         </Routes>
       </motion.main>
