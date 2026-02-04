@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     
     # xAI Grok/Groq API Configuration
     xai_api_key: str = ""
+    xai_api_key_2: str = ""  # Fallback key 2
+    xai_api_key_3: str = ""  # Fallback key 3
     grok_model: str = "llama-3.3-70b-versatile"  # Groq model
     
     # MongoDB Configuration
@@ -63,10 +65,15 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Debug: Print API key status (first/last 4 chars only)
-if settings.xai_api_key:
-    key_preview = f"{settings.xai_api_key[:4]}...{settings.xai_api_key[-4:]}" if len(settings.xai_api_key) > 8 else "***"
-    print(f"✅ API Key loaded: {key_preview}")
+api_keys = [settings.xai_api_key, settings.xai_api_key_2, settings.xai_api_key_3]
+active_keys = [k for k in api_keys if k]
+
+if active_keys:
+    for idx, key in enumerate(active_keys, 1):
+        key_preview = f"{key[:4]}...{key[-4:]}" if len(key) > 8 else "***"
+        print(f"✅ API Key {idx} loaded: {key_preview}")
+    print(f"📊 Total API keys configured: {len(active_keys)}")
 else:
     print("❌ WARNING: No API key found in environment!")
-    print(f"   Looking for XAI_API_KEY in: {os.path.abspath('.env')}")
+    print(f"   Looking for XAI_API_KEY, XAI_API_KEY_2, XAI_API_KEY_3 in: {os.path.abspath('.env')}")
 

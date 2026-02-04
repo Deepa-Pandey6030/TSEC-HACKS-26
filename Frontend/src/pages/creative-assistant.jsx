@@ -32,6 +32,8 @@ export function CreativeAssistantPage() {
     const [improving, setImproving] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadedFile, setUploadedFile] = useState(null);
+    const [rewriteStyle, setRewriteStyle] = useState('professional');
+    const [flowTone, setFlowTone] = useState('default');
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -99,7 +101,7 @@ export function CreativeAssistantPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     content: content,
-                    style: 'creative'
+                    style: rewriteStyle
                 })
             });
 
@@ -114,7 +116,7 @@ export function CreativeAssistantPage() {
         }
     };
 
-    // Improve flow
+    // Improve flow with production-grade Flow Engine
     const handleImproveFlow = async () => {
         if (!content.trim()) return;
 
@@ -125,14 +127,24 @@ export function CreativeAssistantPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     content: content,
-                    focus: 'pacing'
+                    tone: flowTone,
+                    preserve_formatting: true,
+                    focus: 'pacing'  // Legacy parameter
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                const improvedText = data.improved.split('\n\n')[0] || data.improved;
-                setContent(improvedText);
+                setContent(data.improved);
+
+                // Log metadata for debugging
+                if (data.metadata) {
+                    console.log('Flow Engine:', {
+                        chunks: data.metadata.chunks_processed,
+                        tokens: data.metadata.tokens_used,
+                        provider: data.metadata.provider
+                    });
+                }
             }
         } catch (error) {
             console.error('Improve flow error:', error);
@@ -208,7 +220,7 @@ export function CreativeAssistantPage() {
                         >
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                             <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                {analyzing ? 'Analyzing...' : 'Ready to Analyze'}
+                                {analyzing ? 'Analyzing...' : improving ? `Improving Flow (${flowTone})...` : 'Ready to Analyze'}
                             </span>
                         </motion.div>
                     </div>
@@ -283,6 +295,27 @@ export function CreativeAssistantPage() {
                                                 </motion.button>
                                             ))}
                                         </div>
+                                    </div>
+
+                                    {/* Flow Tone Selector */}
+                                    <div className="bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl rounded-2xl p-6 border border-neutral-200/50 dark:border-neutral-700/50 shadow-lg">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <TrendingUp className="text-primary-600 dark:text-primary-400" size={20} />
+                                            <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                                                Flow Tone
+                                            </h3>
+                                        </div>
+                                        <select
+                                            value={flowTone}
+                                            onChange={(e) => setFlowTone(e.target.value)}
+                                            className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                                        >
+                                            <option value="default">Default - Professional & Clear</option>
+                                            <option value="academic">Academic - Scholarly Precision</option>
+                                            <option value="business">Business - Executive Friendly</option>
+                                            <option value="simple">Simple - Easy to Understand</option>
+                                            <option value="creative">Creative - Light Flair</option>
+                                        </select>
                                     </div>
 
                                     {/* File Upload */}

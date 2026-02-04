@@ -84,7 +84,9 @@ class RewriteRequest(BaseModel):
 class ImproveFlowRequest(BaseModel):
     """Request model for flow improvement."""
     content: str
-    focus: str = "pacing"  # pacing, transitions, clarity, engagement
+    focus: str = "pacing"  # pacing, transitions, clarity, engagement (legacy)
+    tone: str = "default"  # default, academic, business, simple, creative
+    preserve_formatting: bool = True
 
 
 # Endpoints
@@ -226,7 +228,8 @@ async def quick_analyze(request: QuickAnalyzeRequest):
 @router.post("/rewrite")
 async def rewrite_content(request: RewriteRequest):
     """
-    Rewrite content with specified style using AI.
+    Advanced document rewriting with production-grade quality.
+    Uses enterprise system prompt for professional editing.
     """
     try:
         from openai import OpenAI
@@ -241,15 +244,50 @@ async def rewrite_content(request: RewriteRequest):
             client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
             model = settings.grok_model
         
-        # Create rewrite prompt
-        style_prompts = {
-            "professional": "Rewrite this text in a professional, polished style while maintaining the core message.",
-            "creative": "Rewrite this text with more creative flair, vivid imagery, and engaging language.",
-            "concise": "Rewrite this text to be more concise and direct while keeping all key information.",
-            "dramatic": "Rewrite this text with more dramatic tension and emotional impact."
+        # Enterprise system prompt for professional document rewriting
+        system_prompt = """You are a Senior Full-Stack Document Rewrite Engine with 30+ years of production experience.
+
+PRIMARY OBJECTIVE: Rewrite and improve documents while:
+- Preserving original meaning exactly
+- Improving clarity, grammar, flow, and structure
+- Maintaining formatting and section hierarchy
+- Avoiding hallucinations or content loss
+
+DOCUMENT PROCESSING STRATEGY:
+1. Parse: Identify headings, sections, lists, paragraphs
+2. Understand: Determine intent, track terminology
+3. Rewrite: Improve readability while preserving semantics 100%
+4. Maintain Continuity: Keep consistent terminology
+
+REWRITING RULES (STRICT):
+- Do NOT summarize unless asked
+- Do NOT skip content
+- Do NOT hallucinate missing sections
+- Do NOT change technical meaning
+- Do NOT add explanations
+
+OUTPUT REQUIREMENTS:
+- Output ONLY the rewritten content
+- No commentary or explanations
+- Clean formatting
+- High editorial quality
+
+QUALITY BAR: Senior human editor standard, publish-ready quality."""
+        
+        # Style-specific instructions
+        style_instructions = {
+            "professional": "Rewrite in professional, polished style. Maintain clarity and precision.",
+            "creative": "Rewrite with creative flair and vivid imagery while preserving all facts.",
+            "concise": "Rewrite more concisely while keeping all key information.",
+            "dramatic": "Rewrite with dramatic tension and emotional impact while staying factual.",
+            "academic": "Rewrite in formal academic style with precise language.",
+            "business": "Rewrite in concise executive-friendly business style.",
+            "simplified": "Rewrite in plain language for easy understanding."
         }
         
-        prompt = f"""{style_prompts.get(request.style, style_prompts['professional'])}
+        instruction = style_instructions.get(request.style, style_instructions["professional"])
+        
+        user_prompt = f"""{instruction}
 
 Original text:
 {request.content}
@@ -259,11 +297,11 @@ Rewritten text:"""
         response = client.chat.completions.create(
             model=model,
             messages=[
-                {"role": "system", "content": "You are a professional editor and writer with 30+ years of experience."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=4000  # Increased for longer documents
         )
         
         rewritten = response.choices[0].message.content.strip()
@@ -271,7 +309,8 @@ Rewritten text:"""
         return {
             "original": request.content,
             "rewritten": rewritten,
-            "style": request.style
+            "style": request.style,
+            "quality": "enterprise-grade"
         }
         
     except Exception as e:
@@ -282,58 +321,38 @@ Rewritten text:"""
 @router.post("/improve-flow")
 async def improve_flow(request: ImproveFlowRequest):
     """
-    Improve the flow of content with AI suggestions.
+    Production-grade flow improvement using FlowEngine.
+    Supports long documents, multiple tones, and strict content preservation.
     """
     try:
-        from openai import OpenAI
-        from app.config import settings
-        import re
+        from app.services.creative_assistant.flow_engine import FlowEngine
         
-        # Determine API provider
-        api_key = settings.xai_api_key
-        if api_key.startswith("gsk_"):
-            client = OpenAI(api_key=api_key, base_url="https://api.groq.com/openai/v1")
-            model = "llama-3.3-70b-versatile"
-        else:
-            client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-            model = settings.grok_model
+        logger.info(f"Flow improvement request: tone={request.tone}, length={len(request.content)}")
         
-        # Create flow improvement prompt - request ONLY the improved text
-        focus_prompts = {
-            "pacing": "Improve the pacing of this text. Return ONLY the improved text, nothing else.",
-            "transitions": "Improve the transitions between ideas in this text. Return ONLY the improved text, nothing else.",
-            "clarity": "Improve the clarity of this text. Return ONLY the improved text, nothing else.",
-            "engagement": "Make this text more engaging. Return ONLY the improved text, nothing else."
-        }
+        # Initialize Flow Engine
+        flow_engine = FlowEngine()
         
-        prompt = f"""{focus_prompts.get(request.focus, focus_prompts['pacing'])}
-
-Original text:
-{request.content}
-
-Improved text (return ONLY the text, no explanations or markers):"""
-        
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a professional editor. When asked to improve text, return ONLY the improved text without any explanations, markers, or formatting like **Improved Version:**. Just return the clean improved text."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=2000
+        # Process with Flow Engine
+        result = await flow_engine.improve_flow(
+            content=request.content,
+            tone=request.tone,
+            preserve_formatting=request.preserve_formatting
         )
         
-        result = response.choices[0].message.content.strip()
-        
-        # Clean up any remaining formatting markers
-        result = re.sub(r'\*\*.*?\*\*:?\s*', '', result)  # Remove **markers**
-        result = re.sub(r'^(Improved Version|Improved Text|Here is|Here\'s).*?:\s*', '', result, flags=re.IGNORECASE)
-        result = result.strip()
+        logger.info(f"Flow improvement complete: chunks={result['chunks_processed']}, tokens={result['tokens_used']}")
         
         return {
-            "original": request.content,
-            "improved": result,
-            "focus": request.focus
+            "original": result["original"],
+            "improved": result["improved"],
+            "tone": result["tone"],
+            "focus": request.focus,  # Legacy compatibility
+            "metadata": {
+                "chunks_processed": result["chunks_processed"],
+                "total_chunks": result["total_chunks"],
+                "tokens_used": result["tokens_used"],
+                "provider": result["provider"],
+                "model": result["model"]
+            }
         }
         
     except Exception as e:
