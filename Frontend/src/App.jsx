@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User } from 'lucide-react';
+// Added FileCheck for the validator icon
+import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck } from 'lucide-react';
 import { ThemeProvider, useTheme } from './lib/theme-provider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HomePage } from './pages/home';
@@ -13,6 +14,7 @@ import Signup from './pages/Signup';
 import AIChat from './components/AIChat';
 import { Button } from './components/ui/button';
 import { ThemeToggle } from './components/ui/theme-toggle';
+import ContinuityValidator from './pages/ContinuityValidator';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -28,7 +30,9 @@ function Navigation() {
   const navigation = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/products', label: 'Products', icon: Package }
+    { path: '/products', label: 'Products', icon: Package },
+    // FIXED: Added icon and completed the object
+    { path: '/validator', label: 'Validate', icon: FileCheck } 
   ];
 
   const handleLogout = () => {
@@ -277,7 +281,8 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductListPage />} />
-          <Route path="/creative-assistant" element={<CreativeAssistantPage />} />
+          <Route path="/validator" element={<ContinuityValidator />} />
+
         </Routes>
       </motion.main>
 
