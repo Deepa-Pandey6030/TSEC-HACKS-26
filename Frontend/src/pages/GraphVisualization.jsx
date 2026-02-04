@@ -292,6 +292,54 @@ export default function GraphVisualization() {
                                 linkDirectionalArrowLength={3.5}
                                 linkDirectionalArrowRelPos={1}
                                 linkCurvature={0.25}
+                                linkCanvasObjectMode={() => 'after'}
+                                linkCanvasObject={(link, ctx, globalScale) => {
+                                    const MAX_FONT_SIZE = 4;
+                                    const LABEL_NODE_MARGIN = 1.5;
+
+                                    const start = link.source;
+                                    const end = link.target;
+
+                                    // Ignore unbound links
+                                    if (typeof start !== 'object' || typeof end !== 'object') return;
+
+                                    // Calculate label positioning
+                                    const textPos = Object.assign(...['x', 'y'].map(c => ({
+                                        [c]: start[c] + (end[c] - start[c]) / 2
+                                    })));
+
+                                    const relLink = { x: end.x - start.x, y: end.y - start.y };
+                                    const maxTextLength = Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
+
+                                    let textAngle = Math.atan2(relLink.y, relLink.x);
+                                    // Maintain label vertical orientation for legibility
+                                    if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
+                                    if (textAngle < -Math.PI / 2) textAngle = -(-Math.PI - textAngle);
+
+                                    const label = link.label || link.type || '';
+
+                                    // Estimate fontSize to fit in link length
+                                    ctx.font = '1px Sans-Serif';
+                                    const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / ctx.measureText(label).width);
+                                    ctx.font = `${fontSize}px Sans-Serif`;
+                                    const textWidth = ctx.measureText(label).width;
+                                    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2);
+
+                                    // Draw text label background
+                                    ctx.save();
+                                    ctx.translate(textPos.x, textPos.y);
+                                    ctx.rotate(textAngle);
+
+                                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                                    ctx.fillRect(-bckgDimensions[0] / 2, -bckgDimensions[1] / 2, ...bckgDimensions);
+
+                                    // Draw text label
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'middle';
+                                    ctx.fillStyle = '#6b7280';
+                                    ctx.fillText(label, 0, 0);
+                                    ctx.restore();
+                                }}
                                 onNodeClick={handleNodeClick}
                                 backgroundColor="#f9fafb"
                                 linkColor={() => '#9ca3af'}
