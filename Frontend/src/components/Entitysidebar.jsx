@@ -25,6 +25,7 @@ export const EntitySidebar = ({ onEntityClick }) => {
     object: "bg-yellow-100 text-yellow-800 border-yellow-300",
     event: "bg-purple-100 text-purple-800 border-purple-300",
     time: "bg-orange-100 text-orange-800 border-orange-300",
+    relationship: "bg-pink-100 text-pink-800 border-pink-300",
   };
 
   return (

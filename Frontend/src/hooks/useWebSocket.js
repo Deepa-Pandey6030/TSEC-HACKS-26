@@ -55,14 +55,15 @@ export const useWebSocket = (manuscriptId) => {
                 const data = await response.json();
                 console.log('✅ NLP Response:', data);
 
-                // Extract entities from response
+                // Extract entities from response (backend returns data.entities.{characters, locations, relationships})
                 const extractedEntities = [];
+                const entities = data.entities || {};
 
                 // Add characters
-                if (data.characters && data.characters.length > 0) {
-                    data.characters.forEach((char) => {
+                if (entities.characters && entities.characters.length > 0) {
+                    entities.characters.forEach((char) => {
                         extractedEntities.push({
-                            text: char.name,
+                            text: char.text,
                             type: 'character',
                             properties: {
                                 archetype: char.archetype,
@@ -74,10 +75,10 @@ export const useWebSocket = (manuscriptId) => {
                 }
 
                 // Add locations
-                if (data.locations && data.locations.length > 0) {
-                    data.locations.forEach((loc) => {
+                if (entities.locations && entities.locations.length > 0) {
+                    entities.locations.forEach((loc) => {
                         extractedEntities.push({
-                            text: loc.name,
+                            text: loc.text,
                             type: 'location',
                             properties: {
                                 atmosphere: loc.atmosphere,
@@ -87,21 +88,21 @@ export const useWebSocket = (manuscriptId) => {
                     });
                 }
 
-                // Add scenes
-                if (data.scenes && data.scenes.length > 0) {
-                    data.scenes.forEach((scene) => {
+                // Add relationships
+                if (entities.relationships && entities.relationships.length > 0) {
+                    entities.relationships.forEach((rel) => {
                         extractedEntities.push({
-                            text: scene.description || 'Scene',
-                            type: 'event',
+                            text: `${rel.source} → ${rel.target}`,
+                            type: 'relationship',
                             properties: {
-                                setting: scene.setting,
-                                mood: scene.mood,
+                                type: rel.type,
+                                ...rel.properties,
                             },
                         });
                     });
                 }
 
-                console.log(`📊 Extracted ${extractedEntities.length} entities`);
+                console.log(`📊 Extracted ${extractedEntities.length} entities (${entities.characters?.length || 0} characters, ${entities.locations?.length || 0} locations, ${entities.relationships?.length || 0} relationships)`);
                 setEntities(extractedEntities);
             } catch (error) {
                 console.error('❌ NLP extraction failed:', error);
