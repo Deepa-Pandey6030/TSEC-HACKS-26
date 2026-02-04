@@ -21,8 +21,8 @@ async def example_reasoning_cycle():
     # NLP data from NLP Extraction Engine (Deepa's module)
     nlp_data = {
         "recent_scenes_analysis": [
-            {"scene_id": "scene_1", "tone": "tense", "pacing": "fast"},
-            {"scene_id": "scene_2", "tone": "reflective", "pacing": "slow"}
+            {"scene_id": "scene_14", "tone": "tense", "pacing": "fast"},
+            {"scene_id": "scene_15", "tone": "confrontational", "pacing": "moderate"}
         ],
         "pacing_trend": "steady",
         "pacing_velocity": 0.1,
@@ -51,7 +51,7 @@ async def example_reasoning_cycle():
             "author_id": "author_456"
         },
         "character_states": {
-            "Alex": {"development_score": 0.7, "last_scene": "scene_14"},
+            "Alex": {"development_score": 0.7, "last_scene": "scene_15"},
             "Maya": {"development_score": 0.4, "last_scene": "scene_10"}
         },
         "character_count": 2,
@@ -138,7 +138,7 @@ async def example_reasoning_cycle():
     )
     
     # Display results
-    print("✅ Reasoning cycle complete!")
+    print("\n✅ Reasoning cycle complete!")
     print()
     print(f"📈 Overall Story Health: {plan.overall_story_health}")
     print(f"🎯 Confidence: {plan.plan_confidence:.2%}")
@@ -146,31 +146,43 @@ async def example_reasoning_cycle():
     print()
     
     # Show interventions by priority
-    print("🔥 CRITICAL Interventions:")
-    for intervention in plan.get_by_priority("critical"):
-        print(f"  - {intervention.what}")
+    critical = plan.get_by_priority("critical")
+    if critical:
+        print("🔥 CRITICAL Interventions:")
+        for intervention in critical:
+            print(f"  - {intervention.what}")
+            print(f"    Why: {intervention.why}")
+        print()
     
-    print()
-    print("⚡ HIGH Priority Interventions:")
-    for intervention in plan.get_by_priority("high"):
-        print(f"  - {intervention.what}")
+    high = plan.get_by_priority("high")
+    if high:
+        print("⚡ HIGH Priority Interventions:")
+        for intervention in high:
+            print(f"  - {intervention.what}")
+            print(f"    Why: {intervention.why}")
+        print()
     
-    print()
-    print("📝 MEDIUM Priority Interventions:")
-    for intervention in plan.get_by_priority("medium"):
-        print(f"  - {intervention.what}")
+    medium = plan.get_by_priority("medium")
+    if medium:
+        print("📝 MEDIUM Priority Interventions:")
+        for intervention in medium:
+            print(f"  - {intervention.what}")
+            print(f"    Why: {intervention.why}")
+        print()
     
-    print()
-    print("💬 LOW Priority Interventions:")
-    for intervention in plan.get_by_priority("low"):
-        print(f"  - {intervention.what}")
+    low = plan.get_by_priority("low")
+    if low:
+        print("💬 LOW Priority Interventions:")
+        for intervention in low:
+            print(f"  - {intervention.what}")
+        print()
     
     # Get detailed explanation
-    print()
     print("📋 Reasoning Explanation:")
     explanation = await engine.get_reasoning_explanation(plan)
-    print(f"  Why these interventions: {explanation['rationale']['why_these']}")
+    print(f"  Why these: {explanation['rationale']['why_these']}")
     print(f"  Why not others: {explanation['rationale']['why_not_others']}")
+    print()
     
     return plan
 

@@ -1,5 +1,5 @@
 """
-Production-grade Grok API integration.
+Production-grade Groq API integration (alternative to Grok).
 Handles retries, rate limiting, error handling, and token management.
 """
 
@@ -74,7 +74,7 @@ def retry_with_exponential_backoff(
 
 class GrokIntegration:
     """
-    Production-grade Grok API integration.
+    Production-grade Groq API integration.
     
     Features:
     - Exponential backoff retry
@@ -84,26 +84,57 @@ class GrokIntegration:
     - Response parsing and validation
     - Caching support
     
-    Note: Grok uses OpenAI-compatible API
+    Note: Using Groq API (groq.com) - ultra-fast inference
     """
     
     def __init__(self, api_key: Optional[str] = None):
-        # Grok uses OpenAI-compatible API
-        self.client = OpenAI(
-            api_key=api_key or settings.xai_api_key,
-            base_url="https://api.x.ai/v1"
-        )
-        self.model = settings.grok_model  # e.g., "grok-beta"
+        """
+        Initialize the API integration.
+        Automatically detects whether to use Groq or xAI Grok based on API key format.
+        """
+        api_key = api_key or settings.xai_api_key
         
-        # Token limits (Grok: 128K context, adjustable output)
-        self.max_context_tokens = 128000
+        # Detect API provider from key format
+        if api_key.startswith("gsk_"):
+            # Groq API key
+            self.provider = "groq"
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.groq.com/openai/v1"
+            )
+            self.model = "llama-3.3-70b-versatile"
+            self.max_context_tokens = 32000
+            logger.info("🚀 Using Groq API with Llama 3.3 70B")
+            
+        elif api_key.startswith("xai-"):
+            # xAI Grok API key
+            self.provider = "grok"
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.x.ai/v1"
+            )
+            self.model = "grok-beta"
+            self.max_context_tokens = 128000
+            logger.info("🚀 Using xAI Grok API")
+            
+        else:
+            # Unknown format - try Groq as default
+            logger.warning(f"Unknown API key format (starts with: {api_key[:4]}...), defaulting to Groq")
+            self.provider = "groq"
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.groq.com/openai/v1"
+            )
+            self.model = "llama-3.3-70b-versatile"
+            self.max_context_tokens = 32000
+        
         self.max_output_tokens = 8000
         
         # Rate limiting state
         self.request_count = 0
         self.last_request_time = 0
         
-        logger.info(f"Grok integration initialized with model: {self.model}")
+        logger.info(f"API integration initialized: {self.provider} - {self.model}")
     
     @retry_with_exponential_backoff(max_retries=3)
     async def generate_reasoning(
@@ -114,7 +145,7 @@ class GrokIntegration:
         max_tokens: int = 4000
     ) -> Dict[str, Any]:
         """
-        Generate AI reasoning using Grok.
+        Generate AI reasoning using Groq.
         
         Args:
             system_prompt: System prompt defining AI persona
@@ -123,7 +154,7 @@ class GrokIntegration:
             max_tokens: Max tokens to generate
         
         Returns:
-            Parsed JSON response from Grok
+            Parsed JSON response from Groq
         """
         start_time = time.time()
         
@@ -132,7 +163,7 @@ class GrokIntegration:
             self._rate_limit_check()
             
             # Log request
-            logger.info(f"Calling Grok API (temp={temperature}, max_tokens={max_tokens})")
+            logger.info(f"Calling Groq API (temp={temperature}, max_tokens={max_tokens})")
             
             # Make API call (synchronous call wrapped for async context)
             response = await asyncio.to_thread(
@@ -162,7 +193,7 @@ class GrokIntegration:
             }
             
             logger.info(
-                f"Grok response received. "
+                f"Groq response received. "
                 f"Tokens: {response.usage.total_tokens if response.usage else 0}, "
                 f"Latency: {time.time() - start_time:.2f}s"
             )
@@ -170,7 +201,7 @@ class GrokIntegration:
             return parsed
             
         except Exception as e:
-            logger.error(f"Error in Grok API call: {e}", exc_info=True)
+            logger.error(f"Error in Groq API call: {e}", exc_info=True)
             raise
     
     async def generate_narrative_reasoning(
@@ -190,7 +221,7 @@ class GrokIntegration:
         Returns:
             ReasoningOutput model with AI's creative judgment
         """
-        logger.info("Generating narrative reasoning via Grok")
+        logger.info("Generating narrative reasoning via Groq")
         
         # Build prompts
         system_prompt = SENIOR_WRITER_SYSTEM_PROMPT
@@ -223,7 +254,7 @@ class GrokIntegration:
     
     def _parse_json_response(self, content: str) -> Dict[str, Any]:
         """
-        Parse JSON from Grok's response.
+        Parse JSON from Groq's response.
         Handles common formatting issues.
         """
         # Try direct parse
@@ -263,8 +294,8 @@ class GrokIntegration:
             pass
         
         # Give up
-        logger.error("Could not parse JSON from Grok response")
-        raise ValueError(f"Invalid JSON response from Grok: {content[:500]}")
+        logger.error("Could not parse JSON from Groq response")
+        raise ValueError(f"Invalid JSON response from Groq: {content[:500]}")
     
     def _rate_limit_check(self):
         """Simple rate limiting check."""
@@ -277,7 +308,7 @@ class GrokIntegration:
         
         self.request_count += 1
         
-        # Log if getting close to limits (adjust based on your Grok tier)
+        # Log if getting close to limits
         if self.request_count > 50:
             logger.warning(f"Approaching rate limit: {self.request_count} requests in last minute")
     
@@ -315,12 +346,3 @@ class GrokIntegration:
             overall_health_reasoning="Analysis encountered an error",
             model_used=self.model
         )
-
-
-# Async-compatible wrapper for synchronous OpenAI calls
-async def async_openai_call(sync_func, *args, **kwargs):
-    """
-    Wrapper to run synchronous OpenAI client calls in async context.
-    """
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, lambda: sync_func(*args, **kwargs))
