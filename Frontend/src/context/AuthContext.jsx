@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getCurrentUser } from '../services/auth';
 
 const AuthContext = createContext(null);
 
@@ -11,7 +10,6 @@ export const useAuth = () => {
     return context;
 };
 
-// Export useTheme for backward compatibility with AIChat
 export const useTheme = () => {
     const context = useContext(AuthContext);
     if (!context) {
@@ -45,30 +43,31 @@ export const AuthProvider = ({ children }) => {
     // Check if user is authenticated on mount
     useEffect(() => {
         const checkAuth = async () => {
-            const token = localStorage.getItem('token');
-            const storedUsername = localStorage.getItem('username');
-
-            if (token) {
+            const sessionToken = localStorage.getItem('sessionToken');
+            
+            if (sessionToken) {
                 try {
-                    const result = await getCurrentUser();
-                    if (result.success) {
-                        setUser(result.user);
+                    const response = await fetch('http://localhost:8000/api/v1/auth/check-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_token: sessionToken })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.valid && data.user) {
+                        setUser(data.user);
                         setIsAuthenticated(true);
                     } else {
-                        localStorage.removeItem('token');
-                        localStorage.removeItem('username');
+                        // Session invalid, clear storage
+                        localStorage.removeItem('sessionToken');
                         setUser(null);
                         setIsAuthenticated(false);
                     }
                 } catch (error) {
-                    if (storedUsername) {
-                        setUser({ username: storedUsername });
-                        setIsAuthenticated(true);
-                    } else {
-                        localStorage.removeItem('token');
-                        setUser(null);
-                        setIsAuthenticated(false);
-                    }
+                    console.error('Auth check failed:', error);
+                    setUser(null);
+                    setIsAuthenticated(false);
                 }
             }
             setLoading(false);
@@ -77,18 +76,31 @@ export const AuthProvider = ({ children }) => {
         checkAuth();
     }, []);
 
-    const login = (userData, token) => {
+
+    const login = (userData, sessionToken) => {
         setUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem('token', token);
-        localStorage.setItem('username', userData.username);
+        localStorage.setItem('sessionToken', sessionToken);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        const sessionToken = localStorage.getItem('sessionToken');
+        
+        if (sessionToken) {
+            try {
+                await fetch('http://localhost:8000/api/v1/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_token: sessionToken })
+                });
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+        
         setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
+        localStorage.removeItem('sessionToken');
     };
 
     const refreshUser = async () => {

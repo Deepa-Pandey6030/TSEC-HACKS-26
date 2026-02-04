@@ -194,6 +194,11 @@ async def validate_chapter(chapter: ChapterInput):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# --- INCLUDE AUTH ROUTES ---
+from app.api.auth import router as auth_router
+app.include_router(auth_router)
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

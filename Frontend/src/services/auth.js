@@ -1,79 +1,84 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3001'; // Adjust to match your backend URL
+const API_URL = 'http://localhost:8000/api/v1/auth';
 
 export const signup = async (name, email, password) => {
   try {
-    const response = await axios.post(`${API_URL}/register`, {
-      username: name,
-      email,
-      password
+    const response = await fetch(`${API_URL}/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
     });
 
-    if (response.data.status === 'ok') {
-      return { success: true };
-    } else {
-      return { success: false, error: response.data.error || 'Signup failed' };
-    }
-  } catch (error) {
-    throw error;
-  }
-};
+    const data = await response.json();
 
-export const login = async (email, password) => {
-  try {
-    const response = await axios.post(`${API_URL}/login`, {
-      email,
-      password
-    });
-
-    if (response.data.status === 'ok') {
-      // Store the token and username in localStorage
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-      }
-      if (response.data.username) {
-        localStorage.setItem('username', response.data.username);
-      }
+    if (response.ok && data.success) {
       return {
         success: true,
-        token: response.data.token,
-        username: response.data.username
+        user: data.user,
+        token: data.token
       };
     } else {
-      return { success: false, error: response.data.error || 'Login failed' };
-    }
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Get current authenticated user
-export const getCurrentUser = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return { success: false, error: 'No token found' };
-    }
-
-    const response = await axios.get(`${API_URL}/me`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (response.data.status === 'ok') {
-      return { success: true, user: response.data.user };
-    } else {
-      return { success: false, error: response.data.error || 'Failed to get user' };
+      return { success: false, error: data.message || 'Signup failed' };
     }
   } catch (error) {
     return { success: false, error: error.message };
   }
 };
 
-// Logout user
-export const logout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('username');
+export const login = async (email, password) => {
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.success) {
+      return {
+        success: true,
+        user: data.user,
+        token: data.token
+      };
+    } else {
+      return { success: false, error: data.message || 'Login failed' };
+    }
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 };
+
+export const logout = async () => {
+  try {
+    const sessionToken = localStorage.getItem('sessionToken');
+    
+    if (sessionToken) {
+      await fetch(`${API_URL}/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_token: sessionToken })
+      });
+    }
+    
+    localStorage.removeItem('sessionToken');
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
+
+export const checkSession = async (sessionToken) => {
+  try {
+    const response = await fetch(`${API_URL}/check-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_token: sessionToken })
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+};
+

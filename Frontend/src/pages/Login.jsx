@@ -43,17 +43,15 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call the API
       const result = await login(email, password);
 
       if (result.success) {
-        // Update auth context with user data
-        authLogin({ username: result.username }, result.token);
+        // Store session token and update auth context
+        authLogin(result.user, result.token);
         // Navigate on success
         navigate('/');
       } else {
-        // Show error on fail
-        setError(result.error);
+        setError(result.error || 'Login failed');
       }
     } catch (err) {
       console.error(err);

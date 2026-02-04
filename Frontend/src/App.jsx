@@ -11,10 +11,12 @@ import { CreativeAssistantPage } from './pages/creative-assistant';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
+import ProtectedDashboard from './pages/ProtectedDashboard';
 import AIChat from './components/AIChat';
 import { Button } from './components/ui/button';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import ContinuityValidator from './pages/ContinuityValidator';
+import './utils/authDebug'; // Load auth test functions
 
 function Navigation() {
   const navigate = useNavigate();
@@ -280,6 +282,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<HomePage />} />
+          <Route path="/protected-dashboard" element={<ProtectedDashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/validator" element={<ContinuityValidator />} />

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { UserPlus, Mail, Lock, User as UserIcon, Loader, CheckCircle, Sparkles, Shield, Zap, ArrowRight } from 'lucide-react';
-import { signup } from '../services/auth'; // <--- 1. NEW IMPORT
+import { signup } from '../services/auth';
+import { useAuth } from '../context/AuthContext';
 
 const AnimatedBackground = () => {
   return (
@@ -84,14 +85,13 @@ const Signup = () => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
-  // 2. UPDATED LOGIC HERE
   const submit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Keep your client-side validation
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -105,19 +105,21 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Call the API function
       const result = await signup(name, email, password);
 
       if (result.success) {
-        setSuccess('Account created successfully! Redirecting to login...');
+        setSuccess('Account created successfully! Logging in...');
         
-        // Wait 2 seconds so user can see the success message, then redirect
+        // Auto-login after signup
+        authLogin(result.user, result.token);
+        
+        // Redirect to home after 1 second
         setTimeout(() => {
-          navigate('/'); // Redirect to Login page
-        }, 2000);
+          navigate('/');
+        }, 1000);
       } else {
         setError(result.error);
-        setIsLoading(false); // Stop loading if error
+        setIsLoading(false);
       }
     } catch (err) {
       console.error(err);
