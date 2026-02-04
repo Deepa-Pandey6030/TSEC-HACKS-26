@@ -7,35 +7,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Initialize Groq Client
-# Ensure GROQ_API_KEY is set in your .env file
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def extract_entities(text):
     """
-    Reads the text and finds who is PHYSICALLY PRESENT.
-    Ignores pronouns (he/she) and "mentions" (thoughts/memories).
+    Step 1: Simple Extraction.
+    We just want to know WHO is mentioned so we can look up their profile.
+    The 'Deep Logic' function will decide if they are actually 'present'.
     """
     prompt = f"""
-    Analyze the scene text. Extract PROPER NAMES of characters and determine their status.
-
-    --- TEXT ---
-    "{text[:1500]}"
-
-    --- EXTRACTION RULES ---
-    1. EXTRACT ONLY PROPER NAMES (e.g., "John", "Alice").
-    2. DO NOT extract pronouns (he, she, him, her, they, it).
-    3. DO NOT extract generic terms (the man, the doctor) unless capitalized as a title.
-    4. IF NO NAMES ARE PRESENT, return an empty list.
-
-    --- STATUS RULES ---
-    1. "alive": The character is PHYSICALLY HERE and performing actions (walking, talking).
-    2. "dead": The text explicitly describes their dead body is present.
-    3. "mentioned": The character is NOT in the room (only thought about, discussed, or seen in a photo).
-
-    --- OUTPUT FORMAT (JSON LIST) ---
-    [
-        {{"name": "Character Name", "status": "alive/dead/mentioned"}}
-    ]
+    Analyze the scene below and list EVERY proper name mentioned.
+    
+    SCENE: "{text[:4000]}"
+    
+    OUTPUT JSON:
+    {{
+        "characters": ["Name1", "Name2"]
+    }}
     """
     try:
         completion = client.chat.completions.create(
@@ -44,52 +32,50 @@ def extract_entities(text):
             response_format={"type": "json_object"},
             temperature=0
         )
-        data = json.loads(completion.choices[0].message.content)
-        
-        # Robust handling for different JSON structures the LLM might return
-        if "characters" in data: 
-            return data["characters"]
-        if isinstance(data, list): 
-            return data
-        
-        return [] 
-    except Exception as e:
-        print(f"Extraction Error: {e}")
+        return json.loads(completion.choices[0].message.content).get("characters", [])
+    except:
         return []
 
-def evaluate_violation(violation_type, violation_msg, scene_text, db_context):
+def evaluate_logic_deeply(scene_text, char_profile):
     """
-    The "Judge" that decides if a conflict is an Error or a Creative Choice.
-    Refined to sound like a Story Editor, not a Database Admin.
+    Step 2: The Deep Logic Analysis.
+    This replaces the old 'evaluate_violation' function.
+    It does not just check 'Alive/Dead'. It checks Context, Intent, and Narrative Flow.
     """
     prompt = f"""
-    You are an expert Story Continuity Editor. A logical contradiction has been detected in the narrative.
-    
-    --- CONTRADICTION ---
-    {violation_msg} (Context: {db_context})
+    You are a Narrative Logic Engine. Your job is to analyze CONTEXT and INTENT, not just keywords.
 
-    --- SCENE TEXT ---
-    "{scene_text[:1500]}"
+    --- 1. DATABASE CONTEXT (The Truth) ---
+    Name: {char_profile['name']}
+    Status: {char_profile['status']} (This is the established reality)
+    Last Seen: {char_profile.get('last_seen', 'Unknown')}
 
-    --- TASK ---
-    Analyze the text for "Narrative Devices" that might explain this contradiction (e.g., Flashbacks, Dreams, Hallucinations).
+    --- 2. SCENE TEXT (The User's Input) ---
+    "{scene_text[:2500]}"
 
-    --- TONE RULES (CRITICAL) ---
-    1. NEVER use technical terms like "database", "record", "system", or "row".
-    2. ALWAYS use terms like "established story context", "narrative continuity", "canon", or "timeline".
-    3. Be helpful and constructive, like a senior editor giving notes to a writer.
+    --- 3. YOUR TASK ---
+    Analyze the character's presence in the scene against the Database Context.
 
-    --- JUDGMENT RULES ---
-    1. If the text contains a TEMPORAL MARKER (e.g., "1990", "Years ago") that places it in the past -> Verdict: INTENTIONAL.
-    2. If the text clearly frames the event as a dream, hallucination, or simulation -> Verdict: INTENTIONAL.
-    3. If the character appears alive in the present tense with no explanation -> Verdict: ERROR.
+    STEP A: Understand the Scene Context.
+    - Is the character physically present and acting?
+    - Or is this a memory, a mention, a metaphor, a dream, or a hallucination?
+    - Interpret phrases like "The ghost of..." or "He felt..." literarily.
 
-    --- OUTPUT JSON ---
+    STEP B: Compare with Database.
+    - If DB says DEAD and Scene implies PHYSICAL PRESENCE -> Contradiction (Critical Error).
+    - If DB says ALIVE and Scene implies PHYSICAL PRESENCE -> Aligned.
+    - If DB says DEAD and Scene implies MEMORY -> Aligned (Intentional Device).
+
+    STEP C: Determine Verdict.
+    - "Aligned": The scene fits perfectly with the DB facts.
+    - "Intentional Device": There is a contradiction in status, but the context (dream/flashback) explains it validly.
+    - "Critical Error": There is a contradiction with NO narrative explanation (e.g., A dead man walking in the present tense).
+
+    --- OUTPUT JSON FORMAT ---
     {{
-        "verdict": "ERROR" or "INTENTIONAL",
-        "confidence": 0.0 to 1.0,
-        "detailed_analysis": "A clear, natural explanation of the issue. Example: 'The scene depicts John acting in the present day, which contradicts the established event of his death.'",
-        "fix_suggestion": "A specific creative writing suggestion. Example: 'Consider framing this as a memory by adding a phrase like \"She remembered how...\"'"
+        "verdict": "Aligned" | "Intentional Device" | "Critical Error",
+        "analysis": "Explain WHY and HOW it fits or fails. Be specific about the context.",
+        "suggestion": "If Critical, suggest a fix. If Aligned, leave empty."
     }}
     """
     try:
@@ -97,13 +83,12 @@ def evaluate_violation(violation_type, violation_msg, scene_text, db_context):
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile", 
             response_format={"type": "json_object"}, 
-            temperature=0.1
+            temperature=0
         )
-        return completion.choices[0].message.content
+        return json.loads(completion.choices[0].message.content)
     except Exception as e:
-        # Fallback JSON if the LLM fails completely
-        return json.dumps({
-            "verdict": "ERROR", 
-            "detailed_analysis": "An internal processing error occurred while analyzing the narrative.", 
-            "fix_suggestion": "Please check the backend logs."
-        })
+        return {
+            "verdict": "Critical Error", 
+            "analysis": "AI Engine failed to parse logic.", 
+            "suggestion": "Check logs."
+        }
