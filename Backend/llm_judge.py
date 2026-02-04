@@ -1,21 +1,19 @@
 import os
 import json
-from dotenv import load_dotenv
 from groq import Groq
+from dotenv import load_dotenv
 
-# Load environment variables FIRST
+# Load environment variables
 load_dotenv()
 
-# Now create the client with the loaded environment variable
-client = Groq(
-    api_key=os.getenv("XAI_API_KEY") or os.getenv("GROQ_API_KEY")
-)
+# Initialize Groq Client
+# Ensure GROQ_API_KEY is set in your .env file
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# --- FUNCTION 1: DYNAMIC EXTRACTION (NEW) ---
 def extract_entities(text):
     """
     Reads the text and finds who is PHYSICALLY PRESENT.
-    Returns: [{"name": "Alice", "status": "alive"}]
+    Ignores pronouns (he/she) and "mentions" (thoughts/memories).
     """
     prompt = f"""
     Analyze the scene text. Extract PROPER NAMES of characters and determine their status.
@@ -24,13 +22,13 @@ def extract_entities(text):
     "{text[:1500]}"
 
     --- EXTRACTION RULES ---
-    1. EXTRACT ONLY PROPER NAMES (e.g., "John", "Alice", "The King").
+    1. EXTRACT ONLY PROPER NAMES (e.g., "John", "Alice").
     2. DO NOT extract pronouns (he, she, him, her, they, it).
-    3. DO NOT extract generic terms (the man, the woman, the doctor) unless capitalized as a proper title.
+    3. DO NOT extract generic terms (the man, the doctor) unless capitalized as a title.
     4. IF NO NAMES ARE PRESENT, return an empty list.
 
     --- STATUS RULES ---
-    1. "alive": The character is PHYSICALLY HERE and performing actions.
+    1. "alive": The character is PHYSICALLY HERE and performing actions (walking, talking).
     2. "dead": The text explicitly describes their dead body is present.
     3. "mentioned": The character is NOT in the room (only thought about, discussed, or seen in a photo).
 
@@ -47,38 +45,51 @@ def extract_entities(text):
             temperature=0
         )
         data = json.loads(completion.choices[0].message.content)
-        # Handle potential key variations
-        if "characters" in data: return data["characters"]
-        if isinstance(data, list): return data
+        
+        # Robust handling for different JSON structures the LLM might return
+        if "characters" in data: 
+            return data["characters"]
+        if isinstance(data, list): 
+            return data
+        
         return [] 
-    except:
+    except Exception as e:
+        print(f"Extraction Error: {e}")
         return []
-# --- FUNCTION 2: THE JUDGE (EXISTING) ---
+
 def evaluate_violation(violation_type, violation_msg, scene_text, db_context):
+    """
+    The "Judge" that decides if a conflict is an Error or a Creative Choice.
+    Refined to sound like a Story Editor, not a Database Admin.
+    """
     prompt = f"""
-    You are a Strict Continuity Logic Engine. A conflict has been detected:
+    You are an expert Story Continuity Editor. A logical contradiction has been detected in the narrative.
     
-    --- CONFLICT ---
+    --- CONTRADICTION ---
     {violation_msg} (Context: {db_context})
 
     --- SCENE TEXT ---
     "{scene_text[:1500]}"
 
-    --- RULES ---
-    1. Analyze if the text contains NARRATIVE DEVICES that explain this conflict.
-    2. LOOK FOR:
-       - Explicit phrases ("He remembered", "It was a dream").
-       - TEMPORAL MARKERS (e.g., "It was 1990", "Ten years ago", "Back in the war").
-       - Reality breaks ("The hologram flickered", "He looked like a ghost").
-    3. If a temporal marker places the scene in the past, the verdict is INTENTIONAL.
-    4. If no such cues exist, it is a CRITICAL ERROR.
+    --- TASK ---
+    Analyze the text for "Narrative Devices" that might explain this contradiction (e.g., Flashbacks, Dreams, Hallucinations).
+
+    --- TONE RULES (CRITICAL) ---
+    1. NEVER use technical terms like "database", "record", "system", or "row".
+    2. ALWAYS use terms like "established story context", "narrative continuity", "canon", or "timeline".
+    3. Be helpful and constructive, like a senior editor giving notes to a writer.
+
+    --- JUDGMENT RULES ---
+    1. If the text contains a TEMPORAL MARKER (e.g., "1990", "Years ago") that places it in the past -> Verdict: INTENTIONAL.
+    2. If the text clearly frames the event as a dream, hallucination, or simulation -> Verdict: INTENTIONAL.
+    3. If the character appears alive in the present tense with no explanation -> Verdict: ERROR.
 
     --- OUTPUT JSON ---
     {{
         "verdict": "ERROR" or "INTENTIONAL",
         "confidence": 0.0 to 1.0,
-        "detailed_analysis": "Explanation referencing specific words...",
-        "fix_suggestion": "Actionable advice..."
+        "detailed_analysis": "A clear, natural explanation of the issue. Example: 'The scene depicts John acting in the present day, which contradicts the established event of his death.'",
+        "fix_suggestion": "A specific creative writing suggestion. Example: 'Consider framing this as a memory by adding a phrase like \"She remembered how...\"'"
     }}
     """
     try:
@@ -90,4 +101,9 @@ def evaluate_violation(violation_type, violation_msg, scene_text, db_context):
         )
         return completion.choices[0].message.content
     except Exception as e:
-        return json.dumps({"verdict": "ERROR", "detailed_analysis": str(e), "fix_suggestion": "Check AI."})
+        # Fallback JSON if the LLM fails completely
+        return json.dumps({
+            "verdict": "ERROR", 
+            "detailed_analysis": "An internal processing error occurred while analyzing the narrative.", 
+            "fix_suggestion": "Please check the backend logs."
+        })
