@@ -34,6 +34,9 @@ export function CreativeAssistantPage() {
     const [uploadedFile, setUploadedFile] = useState(null);
     const [rewriteStyle, setRewriteStyle] = useState('professional');
     const [flowTone, setFlowTone] = useState('default');
+    const [originalContent, setOriginalContent] = useState('');
+    const [showKeepUndoControls, setShowKeepUndoControls] = useState(false);
+    const [predictiveRisks, setPredictiveRisks] = useState(null);
     const editorRef = useRef(null);
     const fileInputRef = useRef(null);
 
@@ -61,7 +64,7 @@ export function CreativeAssistantPage() {
         return () => document.removeEventListener('selectionchange', handleTextSelection);
     }, []);
 
-    // Analyze content
+    // Handle analyze with predictive risk analysis
     const handleAnalyze = async () => {
         if (!content.trim()) return;
 
@@ -71,17 +74,22 @@ export function CreativeAssistantPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    story_title: prompt || 'Untitled Story',
-                    genre: 'Literary Fiction',
+                    story_title: 'Untitled Story',
+                    genre: 'General',
                     completion_percentage: 50,
-                    recent_scene_summary: content.substring(0, 500)
+                    recent_scene_summary: content
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
                 setInsights(data);
-                setInsightPanelOpen(true);
+
+                // Store predictive risk analysis
+                if (data.predictive_risks) {
+                    setPredictiveRisks(data.predictive_risks);
+                    console.log('📊 Predictive Risk Analysis:', data.predictive_risks);
+                }
             }
         } catch (error) {
             console.error('Analysis error:', error);
@@ -135,7 +143,15 @@ export function CreativeAssistantPage() {
 
             if (response.ok) {
                 const data = await response.json();
+
+                // Store original content for undo
+                setOriginalContent(content);
+
+                // Update with improved content
                 setContent(data.improved);
+
+                // Show Keep/Undo controls
+                setShowKeepUndoControls(true);
 
                 // Log metadata for debugging
                 if (data.metadata) {
@@ -151,6 +167,20 @@ export function CreativeAssistantPage() {
         } finally {
             setImproving(false);
         }
+    };
+
+    // Keep the improved changes
+    const handleKeepChanges = () => {
+        setShowKeepUndoControls(false);
+        setOriginalContent('');
+        // Could add backend API call here to save the accepted changes
+    };
+
+    // Undo and revert to original
+    const handleUndoChanges = () => {
+        setContent(originalContent);
+        setShowKeepUndoControls(false);
+        setOriginalContent('');
     };
 
     // Handle file upload
@@ -220,7 +250,7 @@ export function CreativeAssistantPage() {
                         >
                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                             <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                                {analyzing ? 'Analyzing...' : improving ? `Improving Flow (${flowTone})...` : 'Ready to Analyze'}
+                                {analyzing ? 'AI Predicting Future Impact...' : improving ? `Improving Flow (${flowTone})...` : 'Ready to Analyze'}
                             </span>
                         </motion.div>
                     </div>
@@ -416,6 +446,38 @@ export function CreativeAssistantPage() {
                                     className="w-full min-h-[500px] bg-transparent border-none outline-none text-neutral-900 dark:text-neutral-100 text-lg leading-relaxed resize-none placeholder-neutral-400 focus:placeholder-neutral-300"
                                     style={{ fontFamily: 'Georgia, serif' }}
                                 />
+
+                                {/* Keep/Undo Controls */}
+                                <AnimatePresence>
+                                    {showKeepUndoControls && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 20 }}
+                                            className="mt-6 flex items-center justify-center gap-4"
+                                        >
+                                            <motion.button
+                                                onClick={handleKeepChanges}
+                                                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <CheckCircle2 size={20} />
+                                                Keep Changes
+                                            </motion.button>
+
+                                            <motion.button
+                                                onClick={handleUndoChanges}
+                                                className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-medium rounded-lg shadow-lg flex items-center gap-2 transition-all"
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <AlertCircle size={20} />
+                                                Undo Changes
+                                            </motion.button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             {/* Floating Selection Toolbar */}

@@ -56,6 +56,10 @@ class AnalysisResponse(BaseModel):
     why_these_interventions: str
     why_not_others: str
     created_at: str
+    # Predictive Risk Analysis (NEW)
+    predictive_risks: Optional[Dict[str, Any]] = None
+    risk_summary: Optional[str] = None
+    primary_risk: Optional[str] = None
 
 
 class FeedbackRequest(BaseModel):
@@ -193,11 +197,24 @@ async def health_check():
 @router.post("/quick-analyze")
 async def quick_analyze(request: QuickAnalyzeRequest):
     """
-    Quick analysis endpoint for simple use cases.
-    Generates mock data for demonstration.
+    Quick analysis endpoint with Predictive Plot Risk Analysis.
+    Analyzes narrative structure and predicts future risks.
     """
     try:
-        # Create minimal mock data
+        from app.services.creative_assistant.plot_risk_analyzer import PlotRiskAnalyzer
+        
+        logger.info(f"Quick analyze with plot risk analysis: {request.story_title}")
+        
+        # Run predictive plot risk analysis
+        plot_analyzer = PlotRiskAnalyzer()
+        risk_analysis = await plot_analyzer.analyze_plot_risks(
+            content=request.recent_scene_summary,
+            story_title=request.story_title,
+            genre=request.genre,
+            completion_percentage=request.completion_percentage
+        )
+        
+        # Create minimal mock data for standard analysis
         analysis_request = StoryAnalysisRequest(
             story_id=f"story_{request.story_title.lower().replace(' ', '_')}",
             knowledge_graph_data={
@@ -218,7 +235,17 @@ async def quick_analyze(request: QuickAnalyzeRequest):
             }]
         )
         
-        return await analyze_story(analysis_request)
+        # Run standard analysis
+        standard_analysis = await analyze_story(analysis_request)
+        
+        # Enhance response with predictive risks
+        standard_analysis.predictive_risks = risk_analysis
+        standard_analysis.risk_summary = risk_analysis.get("predictive_summary", "")
+        standard_analysis.primary_risk = risk_analysis.get("primary_risk", "")
+        
+        logger.info(f"Analysis complete with risk scores: {risk_analysis.get('risk_scores', {})}")
+        
+        return standard_analysis
         
     except Exception as e:
         logger.error(f"Error in quick analyze: {e}", exc_info=True)
