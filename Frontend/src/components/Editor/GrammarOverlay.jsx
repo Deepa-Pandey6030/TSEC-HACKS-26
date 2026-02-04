@@ -12,27 +12,27 @@ const GrammarOverlay = ({ text, matches, onApplyFix }) => {
         // Grammar/Spelling errors - RED
         if (categoryId === 'CASING' || categoryId === 'TYPOS' || categoryId === 'GRAMMAR' || issueType === 'misspelling' || issueType === 'grammar') {
             return {
-                underline: 'decoration-red-500',
+                style: 'border-b-2 border-red-500',
                 hover: 'hover:bg-red-500/10'
             };
         }
         // Style/Suggestion - BLUE
         else if (categoryId === 'STYLE' || categoryId === 'TONE' || issueType === 'style') {
             return {
-                underline: 'decoration-blue-500',
+                style: 'border-b-2 border-blue-500',
                 hover: 'hover:bg-blue-500/10'
             };
         }
         // Warning/Clarity - YELLOW
         else if (categoryId === 'CONFUSED_WORDS' || categoryId === 'CLARITY' || issueType === 'warning' || issueType === 'clarity') {
             return {
-                underline: 'decoration-yellow-500',
+                style: 'border-b-2 border-yellow-500',
                 hover: 'hover:bg-yellow-500/10'
             };
         }
         // Default to BLUE for unknown types
         return {
-            underline: 'decoration-blue-500',
+            style: 'border-b-2 border-blue-500',
             hover: 'hover:bg-blue-500/10'
         };
     };
@@ -102,7 +102,7 @@ const GrammarOverlay = ({ text, matches, onApplyFix }) => {
                 <span key={index}>
                     {segment.isError ? (
                         <span
-                            className={`relative group pointer-events-auto cursor-pointer decoration-wavy underline ${getErrorStyle(segment.match).underline} decoration-2 underline-offset-4 ${getErrorStyle(segment.match).hover} transition-colors rounded`}
+                            className={`relative group pointer-events-auto cursor-pointer ${getErrorStyle(segment.match).style} ${getErrorStyle(segment.match).hover} transition-colors rounded`}
                             onClick={() => handleFix(segment.match)}
                         >
                             {segment.text}
@@ -110,8 +110,8 @@ const GrammarOverlay = ({ text, matches, onApplyFix }) => {
                             <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-neutral-900 text-white text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
                                 <span className="block font-semibold mb-1">{segment.match.message}</span>
                                 <span className="block text-xs text-gray-300 mb-1">
-                                    {typeof segment.match.rule?.category === 'object' 
-                                        ? segment.match.rule.category.name 
+                                    {typeof segment.match.rule?.category === 'object'
+                                        ? segment.match.rule.category.name
                                         : segment.match.rule?.category || 'Issue'}
                                 </span>
                                 {segment.match.replacements && segment.match.replacements.length > 0 && (

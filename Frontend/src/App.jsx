@@ -18,7 +18,7 @@ import { ThemeToggle } from './components/ui/theme-toggle';
 import ContinuityValidator from './pages/ContinuityValidator';
 import './utils/authDebug'; // Load auth test functions
 
-function Navigation() {
+function Navigation({ isAutocompleteEnabled, setIsAutocompleteEnabled }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isReducedMotion } = useTheme();
@@ -98,6 +98,18 @@ function Navigation() {
 
             {/* Theme Toggle and Auth Buttons */}
             <div className="flex items-center space-x-2">
+              {/* Smart Compose Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsAutocompleteEnabled(!isAutocompleteEnabled)}
+                className={`flex items-center space-x-2 ${isAutocompleteEnabled ? 'bg-purple-50 dark:bg-purple-900/20' : ''}`}
+                title="Toggle Smart Compose"
+              >
+                <Sparkles size={16} className={isAutocompleteEnabled ? "text-purple-600 dark:text-purple-400 fill-current" : "text-neutral-400"} />
+                <span className="hidden lg:inline text-xs font-medium">Smart Compose</span>
+              </Button>
+
               {!loading && (
                 <>
                   {isAuthenticated ? (
@@ -240,6 +252,7 @@ function AppContent() {
   const { isReducedMotion } = useTheme();
   const [showChat, setShowChat] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [isAutocompleteEnabled, setIsAutocompleteEnabled] = useState(true);
 
   const addNotification = (message, type = 'info') => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -268,7 +281,7 @@ function AppContent() {
 
   return (
     <div className="relative min-h-screen">
-      <Navigation />
+      <Navigation isAutocompleteEnabled={isAutocompleteEnabled} setIsAutocompleteEnabled={setIsAutocompleteEnabled} />
 
       <motion.main
         className={hasNavigation ? "pt-20 pb-20 md:pb-0" : ""}
@@ -286,7 +299,7 @@ function AppContent() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/validator" element={<ContinuityValidator />} />
-          <Route path="/creative-assistant" element={<CreativeAssistantPage />} />
+          <Route path="/creative-assistant" element={<CreativeAssistantPage isAutocompleteEnabled={isAutocompleteEnabled} />} />
         </Routes>
       </motion.main>
 

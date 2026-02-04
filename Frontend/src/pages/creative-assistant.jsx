@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../lib/theme-provider';
 import { useGrammarCheck } from '../hooks/useGrammarCheck';
+import { useAutocomplete } from '../hooks/useAutocomplete';
 import GrammarOverlay from '../components/Editor/GrammarOverlay';
+import GhostOverlay from '../components/Editor/GhostOverlay';
 import LineGutter from '../components/Editor/LineGutter';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -20,7 +22,7 @@ const WRITING_MODES = [
     { id: 'academic', icon: '📚', label: 'Academic Reviewer', description: 'Scholarly precision' }
 ];
 
-export function CreativeAssistantPage() {
+export function CreativeAssistantPage({ isAutocompleteEnabled = true }) {
     const { isReducedMotion } = useTheme();
     const [contextPanelOpen, setContextPanelOpen] = useState(true);
     const [insightPanelOpen, setInsightPanelOpen] = useState(true);
@@ -45,6 +47,9 @@ export function CreativeAssistantPage() {
 
     // Grammar Checking Integration
     const { matches, isChecking: isGrammarChecking, setMatches } = useGrammarCheck(content);
+
+    // Autocomplete Integration
+    const { suggestion, acceptSuggestion, clearSuggestion } = useAutocomplete(content, isAutocompleteEnabled);
 
     const handleApplyGrammarFix = (match, replacement) => {
         const prefix = content.slice(0, match.offset);
@@ -72,6 +77,17 @@ export function CreativeAssistantPage() {
         } else {
             setSelectedText('');
             setSelectionPosition(null);
+        }
+    };
+
+    // Handle Tab to accept suggestion
+    const handleKeyDown = (e) => {
+        if (e.key === 'Tab' && suggestion) {
+            e.preventDefault();
+            const addedText = acceptSuggestion();
+            if (addedText) {
+                setContent(prev => prev + addedText);
+            }
         }
     };
 
@@ -446,8 +462,10 @@ export function CreativeAssistantPage() {
                                             Creative Canvas
                                         </span>
                                     </div>
-                                    <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                                        {content.length} characters
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                                            {content.length} characters
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -461,10 +479,12 @@ export function CreativeAssistantPage() {
                                         matches={matches}
                                         onApplyFix={handleApplyGrammarFix}
                                     />
+                                    <GhostOverlay text={content} suggestion={suggestion} />
                                     <textarea
                                         ref={editorRef}
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
+                                        onKeyDown={handleKeyDown}
                                         placeholder="Start writing… Nolan is reviewing your work."
                                         className="w-full min-h-[500px] bg-transparent border-none outline-none text-neutral-900 dark:text-neutral-100 text-lg leading-relaxed resize-none placeholder-neutral-400 focus:placeholder-neutral-300 relative z-10"
                                         style={{ fontFamily: 'Georgia, serif' }}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter
 from app.services.grammar_service import grammar_service
 from app.api.schemas.grammar import GrammarCheckRequest, GrammarCheckResponse
 import logging

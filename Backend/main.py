@@ -177,10 +177,11 @@ async def health_check():
 # from app.api import creative_assistant_router
 # app.include_router(creative_assistant_router)
 
-from app.api import creative_assistant_router, grammar_router
+from app.api import creative_assistant_router, grammar_router, autocomplete_router
 
 app.include_router(creative_assistant_router)
 app.include_router(grammar_router)
+app.include_router(autocomplete_router)
 
 @app.post("/validate")
 async def validate_chapter(chapter: ChapterInput):

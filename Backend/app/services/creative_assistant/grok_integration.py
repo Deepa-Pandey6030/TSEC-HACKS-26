@@ -142,7 +142,8 @@ class GrokIntegration:
         system_prompt: str,
         user_prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 4000
+        max_tokens: int = 4000,
+        json_mode: bool = True
     ) -> Dict[str, Any]:
         """
         Generate AI reasoning using Groq.
@@ -180,8 +181,11 @@ class GrokIntegration:
             # Extract content
             content = response.choices[0].message.content
             
-            # Parse JSON
-            parsed = self._parse_json_response(content)
+            # Parse response
+            if json_mode:
+                parsed = self._parse_json_response(content)
+            else:
+                parsed = {"text": content}
             
             # Add metadata
             parsed["_metadata"] = {
