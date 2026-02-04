@@ -28,7 +28,12 @@ export function CreativeAssistantPage() {
     const [insights, setInsights] = useState(null);
     const [selectedText, setSelectedText] = useState('');
     const [selectionPosition, setSelectionPosition] = useState(null);
+    const [rewriting, setRewriting] = useState(false);
+    const [improving, setImproving] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadedFile, setUploadedFile] = useState(null);
     const editorRef = useRef(null);
+    const fileInputRef = useRef(null);
 
     // Handle text selection for floating toolbar
     const handleTextSelection = () => {
@@ -81,6 +86,98 @@ export function CreativeAssistantPage() {
         } finally {
             setAnalyzing(false);
         }
+    };
+
+    // Rewrite content
+    const handleRewrite = async () => {
+        if (!content.trim()) return;
+
+        setRewriting(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/creative-assistant/rewrite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    style: 'creative'
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setContent(data.rewritten);
+            }
+        } catch (error) {
+            console.error('Rewrite error:', error);
+        } finally {
+            setRewriting(false);
+        }
+    };
+
+    // Improve flow
+    const handleImproveFlow = async () => {
+        if (!content.trim()) return;
+
+        setImproving(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/creative-assistant/improve-flow`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: content,
+                    focus: 'pacing'
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const improvedText = data.improved.split('\n\n')[0] || data.improved;
+                setContent(improvedText);
+            }
+        } catch (error) {
+            console.error('Improve flow error:', error);
+        } finally {
+            setImproving(false);
+        }
+    };
+
+    // Handle file upload
+    const handleFileUpload = async (file) => {
+        if (!file) return;
+
+        setUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch(`${API_BASE_URL}/api/v1/creative-assistant/upload-file`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setContent(data.text);
+                setUploadedFile(data.filename);
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    // Handle file drop
+    const handleFileDrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileUpload(file);
+    };
+
+    // Handle file select
+    const handleFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileUpload(file);
     };
 
     return (
@@ -166,8 +263,8 @@ export function CreativeAssistantPage() {
                                                     key={mode.id}
                                                     onClick={() => setSelectedMode(mode.id)}
                                                     className={`w-full text-left px-4 py-3 rounded-lg transition-all ${selectedMode === mode.id
-                                                            ? 'bg-primary-100 dark:bg-primary-900/20 border-2 border-primary-500'
-                                                            : 'bg-neutral-50 dark:bg-neutral-800 border-2 border-transparent hover:border-neutral-300 dark:hover:border-neutral-600'
+                                                        ? 'bg-primary-100 dark:bg-primary-900/20 border-2 border-primary-500'
+                                                        : 'bg-neutral-50 dark:bg-neutral-800 border-2 border-transparent hover:border-neutral-300 dark:hover:border-neutral-600'
                                                         }`}
                                                     whileHover={{ scale: isReducedMotion ? 1 : 1.02 }}
                                                     whileTap={{ scale: isReducedMotion ? 1 : 0.98 }}
@@ -196,15 +293,53 @@ export function CreativeAssistantPage() {
                                                 Attach Files
                                             </h3>
                                         </div>
-                                        <div className="border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer">
-                                            <FileText className="mx-auto mb-2 text-neutral-400" size={32} />
-                                            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
-                                                Drop files here or click to browse
-                                            </p>
-                                            <p className="text-xs text-neutral-400">
-                                                PDF, DOCX, TXT supported
-                                            </p>
+                                        <div
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onDrop={handleFileDrop}
+                                            onDragOver={(e) => e.preventDefault()}
+                                            className="border-2 border-dashed border-neutral-300 dark:border-neutral-600 rounded-lg p-6 text-center hover:border-primary-500 transition-colors cursor-pointer"
+                                        >
+                                            {uploading ? (
+                                                <div className="flex flex-col items-center">
+                                                    <motion.div
+                                                        animate={{ rotate: 360 }}
+                                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                                    >
+                                                        <Upload className="mx-auto mb-2 text-primary-500" size={32} />
+                                                    </motion.div>
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                                        Uploading...
+                                                    </p>
+                                                </div>
+                                            ) : uploadedFile ? (
+                                                <div className="flex flex-col items-center">
+                                                    <CheckCircle2 className="mx-auto mb-2 text-green-500" size={32} />
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
+                                                        {uploadedFile}
+                                                    </p>
+                                                    <p className="text-xs text-neutral-400">
+                                                        Click to upload another
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center">
+                                                    <FileText className="mx-auto mb-2 text-neutral-400" size={32} />
+                                                    <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">
+                                                        Drop files here or click to browse
+                                                    </p>
+                                                    <p className="text-xs text-neutral-400">
+                                                        PDF, DOCX, TXT supported
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept=".pdf,.docx,.txt"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                        />
                                     </div>
                                 </div>
                             </motion.div>
@@ -398,12 +533,52 @@ export function CreativeAssistantPage() {
 
                     <div className="w-px h-6 bg-neutral-700" />
 
-                    <button className="px-4 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded-full text-white text-sm flex items-center gap-2 transition-colors">
-                        <Wand2 size={16} /> Rewrite
-                    </button>
-                    <button className="px-4 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded-full text-white text-sm flex items-center gap-2 transition-colors">
-                        <TrendingUp size={16} /> Improve Flow
-                    </button>
+                    <motion.button
+                        onClick={handleRewrite}
+                        disabled={!content.trim() || rewriting}
+                        className="px-4 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded-full text-white text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={!rewriting ? { scale: 1.05 } : {}}
+                        whileTap={!rewriting ? { scale: 0.95 } : {}}
+                    >
+                        {rewriting ? (
+                            <>
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                >
+                                    <Wand2 size={16} />
+                                </motion.div>
+                                Rewriting...
+                            </>
+                        ) : (
+                            <>
+                                <Wand2 size={16} /> Rewrite
+                            </>
+                        )}
+                    </motion.button>
+                    <motion.button
+                        onClick={handleImproveFlow}
+                        disabled={!content.trim() || improving}
+                        className="px-4 py-2 hover:bg-neutral-800 dark:hover:bg-neutral-700 rounded-full text-white text-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        whileHover={!improving ? { scale: 1.05 } : {}}
+                        whileTap={!improving ? { scale: 0.95 } : {}}
+                    >
+                        {improving ? (
+                            <>
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                >
+                                    <TrendingUp size={16} />
+                                </motion.div>
+                                Improving...
+                            </>
+                        ) : (
+                            <>
+                                <TrendingUp size={16} /> Improve Flow
+                            </>
+                        )}
+                    </motion.button>
                 </div>
             </motion.div>
         </div>
