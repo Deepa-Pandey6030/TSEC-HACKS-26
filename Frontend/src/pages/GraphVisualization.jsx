@@ -70,17 +70,20 @@ export default function GraphVisualization() {
     <div className="min-h-screen bg-neutral-900 p-6">
 
       <div className="flex gap-3 mb-4">
-        <select
-          value={manuscriptId}
-          onChange={e => setManuscriptId(e.target.value)}
-          className="bg-neutral-800 text-white px-3 py-2 rounded"
-        >
-          {manuscripts.map(m => (
-            <option key={m.manuscript_id} value={m.manuscript_id}>
-              {m.manuscript_id}
-            </option>
-          ))}
-        </select>
+      <select
+  value={manuscriptId}
+  onChange={e => setManuscriptId(e.target.value)}
+  className="bg-neutral-800 text-white px-3 py-2 rounded"
+>
+  <option value="">Select manuscript</option>
+
+  {manuscripts.map(m => (
+    <option key={m.manuscript_id} value={m.manuscript_id}>
+      {m.manuscript_id} — 👤 {m.characters} chars • 📍 {m.locations} locs • 🔗 {m.relationships} rels
+    </option>
+  ))}
+</select>
+
 
         <Button onClick={() => fetchGraphData(manuscriptId)}>
           {loading ? 'Loading...' : 'Load Graph'}
