@@ -8,45 +8,44 @@ const features = [
   {
     image: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=800',
     title: 'AI Creative Assistant',
-    meta: 'NOLAN SYSTEM',
+    meta: 'AI ASSISTANT',
     description: 'Senior Writer AI with 30+ years of experience provides intelligent creative guidance, analyzes narrative health, and suggests improvements for your story.',
     link: '/creative-assistant'
   },
   {
     image: 'https://images.pexels.com/photos/8728382/pexels-photo-8728382.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Predictive Misinformation Modeling',
-    meta: 'AI AGENTS',
-    description: 'AI agents analyze spreading patterns to predict which content will go viral and preemptively flag potential misinformation before mass distribution.'
+    title: 'Dashboard & Analytics',
+    meta: 'ANALYTICS',
+    description: 'Real-time visualization of content analysis, credibility scores, and performance metrics across all your projects.',
+    link: '/dashboard'
   },
   {
     image: 'https://images.pexels.com/photos/8728380/pexels-photo-8728380.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Crisis Communication Hub',
-    meta: 'EMERGENCY RESPONSE',
-    description: 'Dedicated emergency response system that provides real-time, location-based crisis updates with severity levels and official guidance.'
+    title: 'Products & Services',
+    meta: 'MARKETPLACE',
+    description: 'Browse our comprehensive suite of AI-powered tools for content verification, monitoring, and authentic engagement.',
+    link: '/products'
   },
   {
     image: 'https://images.pexels.com/photos/8728381/pexels-photo-8728381.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Blockchain Authenticity',
+    title: 'Continuity Validator',
     meta: 'VERIFICATION',
-    description: 'Immutable content verification using blockchain technology, creating tamper-proof authenticity scores and source provenance tracking.'
-  },
-  {
-    image: 'https://images.pexels.com/photos/7688336/pexels-photo-7688336.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Expert Network Integration',
-    meta: 'VERIFICATION',
-    description: 'Direct connection to domain experts, medical professionals, and academic institutions for rapid verification of specialized claims.'
-  },
-  {
-    image: 'https://images.pexels.com/photos/8728383/pexels-photo-8728383.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'AR/VR Verification Overlay',
-    meta: 'INNOVATION',
-    description: 'Mobile app feature that uses augmented reality to overlay credibility scores and fact-checks directly onto social media content.'
+    description: 'Check for narrative inconsistencies, continuity errors, and verify content coherence across multiple documents.',
+    link: '/validator'
   },
   {
     image: 'https://images.pexels.com/photos/7688334/pexels-photo-7688334.jpeg?auto=compress&cs=tinysrgb&w=800',
-    title: 'Public Trust Dashboard',
-    meta: 'ANALYTICS',
-    description: 'Real-time visualization of information credibility across different topics and sources, helping communities understand reliability.'
+    title: 'Graph Visualization',
+    meta: 'NETWORK ANALYSIS',
+    description: 'Visualize content relationships, narrative connections, and misinformation spread patterns in an interactive graph.',
+    link: '/graph-view'
+  },
+  {
+    image: 'https://images.pexels.com/photos/8728383/pexels-photo-8728383.jpeg?auto=compress&cs=tinysrgb&w=800',
+    title: 'Critique & Review',
+    meta: 'QUALITY ASSURANCE',
+    description: 'Get comprehensive feedback on content quality, tone, and messaging with actionable recommendations.',
+    link: '/critique-view'
   }
 ];
 

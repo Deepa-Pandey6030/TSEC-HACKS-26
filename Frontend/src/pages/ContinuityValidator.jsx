@@ -1,21 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Shield, AlertTriangle, CheckCircle, Edit, Eye, FileText, Zap, Users, Ghost, Activity } from 'lucide-react';
+import { useTheme } from '../lib/theme-provider';
 import { useGrammarCheck } from '../hooks/useGrammarCheck';
 import GrammarOverlay from '../components/Editor/GrammarOverlay';
 
-// --- VISUAL ICONS ---
-const Icons = {
-  Shield: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-  Alert: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-  Check: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  Users: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-  Ghost: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 22v-2a3 3 0 0 1 3-3h.01a3 3 0 0 1 3 3v2"/><path d="M12 2a7 7 0 0 0-7 7v13l2.5-1.5L10 22l2.5-1.5L15 22l2.5-1.5L20 22V9a7 7 0 0 0-7-7z"/><path d="M10 10h.01"/><path d="M14 10h.01"/></svg>,
-  Play: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-  X: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-};
-
 const ContinuityValidator = () => {
+  const { isReducedMotion } = useTheme();
   const [chapterId, setChapterId] = useState(1);
   const [text, setText] = useState(""); 
   const [alerts, setAlerts] = useState([]);
@@ -59,152 +51,219 @@ const ContinuityValidator = () => {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: isReducedMotion ? 0 : 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 140, damping: 20 }
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen w-full bg-[#000000] text-gray-200 font-sans overflow-hidden">
+    <div className="h-screen flex flex-col bg-[#09090b] text-gray-200 font-sans overflow-hidden">
       
-      {/* --- TOP HEADER --- */}
-      <nav className="flex items-center justify-between h-16 px-6 border-b border-gray-800 bg-[#09090b] shrink-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded bg-blue-600 text-white font-bold tracking-tight shadow-lg shadow-blue-900/50">N</div>
-          <div>
-            <h1 className="text-base font-bold text-white tracking-wide">Nolan Editor <span className="text-blue-500 text-xs uppercase ml-1">Studio</span></h1>
-          </div>
+      {/* --- HEADER --- */}
+      <motion.header 
+        className="h-16 px-6 border-b border-white/5 bg-[#0c0c0e] flex items-center justify-between shrink-0 z-20"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+      >
+        <div>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+            Nolan Validator
+          </h1>
+          <p className="text-xs text-neutral-500">Continuity Engine v2.0</p>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 bg-gray-900 px-4 py-1.5 rounded-full border border-gray-800">
-            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Chapter</span>
-            <input 
-              type="number" 
-              value={chapterId} 
-              onChange={(e) => setChapterId(e.target.value)} 
-              className="bg-transparent w-8 text-sm font-bold text-white text-center focus:outline-none"
-            />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 bg-neutral-900/50 border border-white/5 px-3 py-1.5 rounded-lg">
+             <span className="text-xs font-medium text-neutral-500 uppercase">Chapter</span>
+             <input 
+                type="number" 
+                value={chapterId} 
+                onChange={(e) => setChapterId(e.target.value)} 
+                className="bg-transparent w-8 text-sm font-bold text-white text-center focus:outline-none"
+             />
           </div>
-          <button 
+          <motion.button
             onClick={validateChapter}
             disabled={status === "loading"}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             className={`
-              flex items-center gap-2 px-6 py-2 rounded-full text-sm font-bold transition-all shadow-md
+              flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold transition-all
               ${status === "loading" 
-                ? "bg-gray-800 text-gray-500 cursor-not-allowed" 
-                : "bg-white text-black hover:bg-gray-200 hover:shadow-white/10"
+                ? "bg-neutral-800 text-neutral-500 cursor-not-allowed" 
+                : "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-cyan-900/20 hover:shadow-cyan-900/40"
               }
             `}
           >
-            {status === "loading" ? "Scanning..." : <><Icons.Play /> Run Safety Check</>}
-          </button>
+            {status === "loading" ? <Zap size={14} className="animate-pulse" /> : <Shield size={14} />}
+            {status === "loading" ? "Analyzing..." : "Run Checks"}
+          </motion.button>
         </div>
-      </nav>
+      </motion.header>
 
-      {/* --- MAIN WORKSPACE --- */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* --- MAIN CONTENT GRID --- */}
+      <motion.div 
+        className="flex-1 grid grid-cols-12 overflow-hidden"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         
-        {/* === LEFT PANEL: REFERENCE (Cast & Forgotten) === */}
-        <aside className="w-[300px] flex flex-col border-r border-gray-800 bg-[#0c0c0e] shrink-0">
+        {/* === LEFT SIDEBAR: ANALYTICS (Col 3) === */}
+        <motion.aside variants={itemVariants} className="col-span-3 bg-[#0c0c0e] border-r border-white/5 flex flex-col min-w-0">
           
           {/* Section 1: Cast Overview */}
-          <div className="p-6 border-b border-gray-800">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Icons.Users /> Cast Database
+          <div className="p-5 border-b border-white/5">
+            <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Users size={14} /> Cast Database
             </h3>
+            
             {analytics ? (
-              <div className="bg-[#18181b] rounded-xl p-4 border border-gray-800">
-                <div className="flex justify-between items-end mb-2">
+              <div className="bg-neutral-900/50 rounded-xl p-4 border border-white/5">
+                <div className="flex items-end justify-between mb-3">
                   <span className="text-3xl font-light text-white">{analytics.total_characters}</span>
-                  <span className="text-[10px] text-gray-500 uppercase mb-1">Total Entities</span>
+                  <span className="text-[10px] text-neutral-500 uppercase mb-1">Total Entities</span>
                 </div>
-                {/* Visual Bar */}
-                <div className="flex h-2 w-full rounded-full overflow-hidden bg-gray-800">
-                  <div className="bg-green-500" style={{ width: `${(analytics.active_count / analytics.total_characters) * 100}%` }}></div>
-                </div>
-                <div className="flex justify-between mt-2 text-[10px] uppercase font-bold text-gray-500">
-                  <span>{analytics.active_count} Active</span>
-                  <span>{analytics.inactive_count} Inactive</span>
+                
+                <div className="space-y-2">
+                  <div className="group">
+                    <div className="flex justify-between text-[10px] mb-1 text-neutral-400">
+                      <span>Active</span>
+                      <span>{analytics.active_count}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-neutral-800 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(analytics.active_count / analytics.total_characters) * 100}%` }}
+                        className="h-full bg-green-500/80 rounded-full"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="group">
+                    <div className="flex justify-between text-[10px] mb-1 text-neutral-400">
+                      <span>Inactive</span>
+                      <span>{analytics.inactive_count}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-neutral-800 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(analytics.inactive_count / analytics.total_characters) * 100}%` }}
+                        className="h-full bg-neutral-600 rounded-full"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            ) : <div className="h-20 bg-gray-800 animate-pulse rounded-xl"></div>}
+            ) : (
+              <div className="animate-pulse h-24 bg-neutral-900 rounded-xl"></div>
+            )}
           </div>
 
           {/* Section 2: Forgotten Characters */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-6 py-4 bg-[#0c0c0e]">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                <Icons.Ghost /> Forgotten List
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="p-5 pb-2">
+              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
+                <Ghost size={14} /> Forgotten List
               </h3>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-3 custom-scrollbar">
+            
+            <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-2 custom-scrollbar">
               {analytics && analytics.dormant_characters.length > 0 ? (
                 analytics.dormant_characters.map((char, i) => (
-                  <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-[#18181b] border border-gray-800/50 hover:border-purple-500/50 transition-colors group">
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex justify-between items-center p-3 rounded-lg bg-neutral-900/30 border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all group"
+                  >
                     <div>
-                      <div className="text-sm font-medium text-gray-200 group-hover:text-purple-300 transition-colors">{char.name}</div>
-                      <div className="text-[10px] text-gray-500">Last: Ch {char.last_seen}</div>
+                      <div className="text-sm font-medium text-neutral-300 group-hover:text-purple-300 transition-colors">{char.name}</div>
+                      <div className="text-[10px] text-neutral-500">Last seen: Ch {char.last_seen}</div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-xs font-bold text-purple-400">Not seen since:{char.gap}</span>
-                      <span className="text-[8px] uppercase text-gray-600">Chapters</span>
+                      <span className="text-xs font-bold text-purple-400">+{char.gap}</span>
+                      <span className="text-[8px] uppercase text-neutral-600">Chapters</span>
                     </div>
-                  </div>
+                  </motion.div>
                 ))
               ) : (
-                 <div className="text-center py-10 opacity-50 text-xs">No dormant characters.</div>
+                <div className="text-center py-10 opacity-40 text-xs">
+                  <CheckCircle size={24} className="mx-auto mb-2 text-neutral-600" />
+                  <p>No dormant characters</p>
+                </div>
               )}
             </div>
           </div>
-        </aside>
+        </motion.aside>
 
-        {/* === CENTER PANEL: EDITOR === */}
-        <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative z-0">
-          <div className="flex-1 relative overflow-y-auto custom-scrollbar">
-            <div className="max-w-3xl mx-auto min-h-full py-12 px-10 relative z-10">
-              <GrammarOverlay text={text} matches={matches} onApplyFix={handleApplyGrammarFix} />
-              <textarea 
-                className="w-full h-full min-h-[70vh] bg-transparent border-none text-gray-300 font-serif text-xl leading-loose resize-none focus:ring-0 outline-none placeholder-gray-800"
-                placeholder="Start writing your scene here..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                spellCheck="false"
-              />
-            </div>
-          </div>
-          <div className="h-8 border-t border-gray-800 bg-[#09090b] flex items-center justify-between px-4 text-[10px] text-gray-600 uppercase font-mono tracking-wider">
-             <span>Words: {text.split(/\s+/).filter(Boolean).length}</span>
-             <span className={matches.length ? "text-yellow-500" : "text-green-500"}>Grammar: {matches.length ? "Review Needed" : "Clean"}</span>
-          </div>
-        </main>
+        {/* === CENTER: EDITOR (Col 6) === */}
+        <motion.main variants={itemVariants} className="col-span-6 bg-[#09090b] relative flex flex-col min-w-0">
+           <div className="flex-1 relative overflow-y-auto custom-scrollbar">
+             {/* Gradient Glow */}
+             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-64 bg-primary-500/5 blur-[100px] pointer-events-none" />
+             
+             <div className="max-w-3xl mx-auto min-h-full py-10 px-8 relative z-10">
+               <GrammarOverlay text={text} matches={matches} onApplyFix={handleApplyGrammarFix} />
+               <textarea 
+                 className="w-full h-full min-h-[70vh] bg-transparent border-none text-neutral-300 font-serif text-lg leading-loose resize-none focus:ring-0 outline-none placeholder-neutral-800"
+                 placeholder="Begin writing your narrative..."
+                 value={text}
+                 onChange={(e) => setText(e.target.value)}
+                 spellCheck="false"
+               />
+             </div>
+           </div>
 
-        {/* === RIGHT PANEL: SAFETY CHECK (Logic Feed) === */}
-        {/* WIDENED to 400px for maximum readability */}
-        <aside className="w-[400px] flex flex-col border-l border-gray-800 bg-[#111113] shrink-0 shadow-2xl z-10">
-          
-          {/* Header Area */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-gray-800 bg-[#18181b]">
-            <span className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
-              <Icons.Shield /> Safety Check
-            </span>
-            {/* Quick Status Pill */}
-            {status === "valid" && <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-bold uppercase rounded border border-green-500/20">Passed</span>}
-            {status === "error" && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-bold uppercase rounded border border-red-500/20">Failed</span>}
+           {/* Editor Footer */}
+           <div className="h-10 border-t border-white/5 bg-[#0c0c0e] flex items-center justify-between px-6 shrink-0 text-[10px] text-neutral-500 uppercase tracking-wider font-medium">
+              <span>{text.split(/\s+/).filter(Boolean).length} Words</span>
+              <span className={matches.length ? "text-yellow-500" : "text-green-500"}>
+                {matches.length ? `${matches.length} Grammar Suggestions` : "Grammar Clean"}
+              </span>
+           </div>
+        </motion.main>
+
+        {/* === RIGHT SIDEBAR: SAFETY CHECK (Col 3) === */}
+        <motion.aside variants={itemVariants} className="col-span-3 bg-[#0c0c0e] border-l border-white/5 flex flex-col min-w-0">
+          <div className="p-5 border-b border-white/5 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-2">
+              <Shield size={14} /> Logic Feed
+            </h3>
+            {status === 'valid' && <span className="text-[10px] px-2 py-0.5 bg-green-500/10 text-green-400 rounded border border-green-500/20">PASSED</span>}
+            {status === 'error' && <span className="text-[10px] px-2 py-0.5 bg-red-500/10 text-red-400 rounded border border-red-500/20">ISSUES</span>}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-[#111113]">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-[#0a0a0c]">
             {status === "idle" && (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-600 opacity-60">
-                 <div className="mb-4 p-4 bg-gray-800/50 rounded-full"><Icons.Shield /></div>
-                 <p className="text-xs uppercase tracking-widest font-bold">System Ready</p>
-                 <p className="text-[10px] mt-2">Waiting for text analysis...</p>
-              </div>
+               <div className="flex flex-col items-center justify-center h-40 text-neutral-700 text-center">
+                 <Shield size={32} className="mb-3 opacity-20" />
+                 <p className="text-xs font-medium">System Ready</p>
+                 <p className="text-[10px] opacity-60">Waiting for text input</p>
+               </div>
             )}
 
             {status === "valid" && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-6 bg-green-500/5 border border-green-500/20 rounded-xl">
-                 <div className="flex items-center gap-3 mb-3">
-                   <div className="p-2 bg-green-500/20 rounded-full text-green-400"><Icons.Check /></div>
-                   <h4 className="text-base font-bold text-white">All Systems Go</h4>
+              <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="p-5 bg-green-500/5 border border-green-500/10 rounded-xl">
+                 <div className="flex items-center gap-2 text-green-400 mb-2">
+                   <CheckCircle size={16} />
+                   <span className="text-xs font-bold uppercase">Plot Integrity Verified</span>
                  </div>
-                 <p className="text-sm text-green-200/70 leading-relaxed">
-                   No logical contradictions found. Timeline and character mortality are consistent.
+                 <p className="text-[11px] text-green-200/50 leading-relaxed">
+                   Narrative flow aligns with established database facts. No timeline or mortality contradictions found.
                  </p>
               </motion.div>
             )}
@@ -215,46 +274,45 @@ const ContinuityValidator = () => {
                   key={index}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: index * 0.1 }}
                   className={`
-                    relative p-5 rounded-xl border-l-4 shadow-lg
+                    relative p-4 rounded-xl border
                     ${alert.type === "Critical Error" 
-                      ? "bg-[#1f1212] border-l-red-500 border-y border-r border-red-500/20" 
-                      : "bg-[#1f1a12] border-l-yellow-500 border-y border-r border-yellow-500/20"
+                      ? "bg-red-500/5 border-red-500/20" 
+                      : "bg-yellow-500/5 border-yellow-500/20"
                     }
                   `}
                 >
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                       {alert.type === "Critical Error" ? <span className="text-red-500"><Icons.X /></span> : <span className="text-yellow-500"><Icons.Alert /></span>}
-                       <span className={`text-xs font-bold uppercase tracking-wider ${alert.type === "Critical Error" ? "text-red-400" : "text-yellow-400"}`}>
-                         {alert.type}
-                       </span>
-                    </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {alert.type === "Critical Error" ? <AlertTriangle size={14} className="text-red-500" /> : <AlertTriangle size={14} className="text-yellow-500" />}
+                    <span className={`text-[10px] font-bold uppercase ${alert.type === "Critical Error" ? "text-red-400" : "text-yellow-400"}`}>
+                      {alert.type}
+                    </span>
                   </div>
 
-                  {/* Message Body - Larger Text */}
-                  <p className="text-sm text-gray-200 leading-relaxed mb-4 font-light">
+                  <p className="text-xs text-neutral-300 leading-relaxed mb-3 font-light">
                     {alert.message}
                   </p>
 
-                  {/* Suggestion Box */}
-                  <div className="text-xs p-3 bg-black/40 rounded-lg border border-white/5">
-                    <strong className="block text-gray-500 uppercase text-[10px] mb-1">Recommended Fix</strong>
-                    <span className="text-gray-300">{alert.suggestion}</span>
+                  <div className="text-[10px] p-3 bg-black/20 rounded-lg border border-white/5">
+                    <strong className="block text-neutral-500 uppercase mb-1 text-[9px]">Recommendation</strong>
+                    <span className="text-neutral-400">{alert.suggestion}</span>
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
-        </aside>
-      </div>
+        </motion.aside>
 
+      </motion.div>
+
+      {/* --- SCROLLBAR STYLE --- */}
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #444; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #262626; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #404040; }
       `}</style>
     </div>
   );

@@ -14,7 +14,7 @@ import { ProductListPage } from './pages/product-list';
 import { CreativeAssistantPage } from './pages/creative-assistant';
 import GraphVisualization from './pages/GraphVisualization';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+
 import Signup from './pages/Signup';
 import ProtectedDashboard from './pages/ProtectedDashboard';
 import AIChat from './components/AIChat';
@@ -38,8 +38,6 @@ function Navigation({ isAutocompleteEnabled, setIsAutocompleteEnabled }) {
 
   const navigation = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/products', label: 'Products', icon: Package },
     { path: '/creative-assistant', label: 'AI Assistant', icon: Sparkles },
     { path: '/manuscript', label: 'Manuscript', icon: BookOpen },
     { path: '/validator', label: 'Validate', icon: FileCheck },
@@ -305,8 +303,8 @@ function AppContent() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<HomePage />} />
           <Route path="/protected-dashboard" element={<ProtectedDashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/products" element={<ProductListPage />} />
+         
+         
           <Route path="/validator" element={<ContinuityValidator />} />
           <Route path="/creative-assistant" element={<CreativeAssistantPage isAutocompleteEnabled={isAutocompleteEnabled} />} />
           <Route path="/manuscript" element={<ManuscriptPage />} />
