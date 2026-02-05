@@ -226,12 +226,14 @@ async def health_check():
 
 # --- ROUTERS (Preserved from your code) ---
 from app.api import creative_assistant_router, grammar_router, autocomplete_router, nlp_router, graph_router
+from app.api.manuscript import router as manuscript_router
 
 app.include_router(creative_assistant_router)
 app.include_router(grammar_router)
 app.include_router(autocomplete_router)
 app.include_router(nlp_router)
 app.include_router(graph_router)
+app.include_router(manuscript_router)  # Manuscript processing pipeline
 
 # --- ADDED: ANALYTICS ENDPOINT ---
 @app.get("/analytics")

@@ -428,3 +428,92 @@ async def health_check():
             "connection": "failed",
             "error": str(e)
         }
+
+
+@router.get("/manuscripts")
+async def list_manuscripts():
+    """
+    List all manuscripts in the database with their entity counts.
+    Useful for finding the correct manuscript_id to query.
+    """
+    try:
+        with graph_db.driver.session() as session:
+            # Get all unique manuscript IDs with counts
+            query = """
+                MATCH (n:NarrativeEntity)
+                WITH n.manuscript_id as mid, labels(n) as lbls
+                RETURN mid as manuscript_id,
+                       count(CASE WHEN 'Character' IN lbls THEN 1 END) as characters,
+                       count(CASE WHEN 'Location' IN lbls THEN 1 END) as locations,
+                       count(*) as total_nodes
+                ORDER BY manuscript_id
+            """
+            result = session.run(query)
+            
+            manuscripts = []
+            for record in result:
+                manuscripts.append({
+                    "manuscript_id": record["manuscript_id"],
+                    "characters": record["characters"],
+                    "locations": record["locations"],
+                    "total_nodes": record["total_nodes"]
+                })
+            
+            # Also get relationship counts per manuscript
+            rel_query = """
+                MATCH (a:NarrativeEntity)-[r]->(b:NarrativeEntity)
+                WHERE a.manuscript_id = b.manuscript_id
+                RETURN a.manuscript_id as manuscript_id, count(r) as relationships
+            """
+            rel_result = session.run(rel_query)
+            
+            rel_counts = {r["manuscript_id"]: r["relationships"] for r in rel_result}
+            
+            for m in manuscripts:
+                m["relationships"] = rel_counts.get(m["manuscript_id"], 0)
+        
+        logger.info(f"Found {len(manuscripts)} manuscripts in database")
+        return {"manuscripts": manuscripts, "total": len(manuscripts)}
+        
+    except Exception as e:
+        logger.error(f"Error listing manuscripts: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to list manuscripts: {str(e)}")
+
+
+@router.get("/debug")
+async def debug_database():
+    """
+    Debug endpoint to show all entities in the database.
+    Use this to verify data is being stored correctly.
+    """
+    try:
+        with graph_db.driver.session() as session:
+            # Get all nodes
+            nodes_query = """
+                MATCH (n:NarrativeEntity)
+                RETURN n.name as name, n.manuscript_id as manuscript_id, labels(n) as labels
+                LIMIT 100
+            """
+            nodes_result = session.run(nodes_query)
+            nodes = [dict(r) for r in nodes_result]
+            
+            # Get all relationships
+            rels_query = """
+                MATCH (a:NarrativeEntity)-[r]->(b:NarrativeEntity)
+                RETURN a.name as source, type(r) as type, b.name as target, a.manuscript_id as manuscript_id
+                LIMIT 100
+            """
+            rels_result = session.run(rels_query)
+            relationships = [dict(r) for r in rels_result]
+        
+        return {
+            "nodes": nodes,
+            "relationships": relationships,
+            "node_count": len(nodes),
+            "relationship_count": len(relationships)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in debug endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Debug failed: {str(e)}")
+

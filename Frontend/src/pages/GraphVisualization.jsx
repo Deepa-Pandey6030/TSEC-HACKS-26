@@ -13,7 +13,34 @@ export default function GraphVisualization() {
     const [selectedNode, setSelectedNode] = useState(null);
     const [manuscriptId, setManuscriptId] = useState('');
     const [stats, setStats] = useState(null);
+    const [manuscripts, setManuscripts] = useState([]);
+    const [loadingManuscripts, setLoadingManuscripts] = useState(false);
     const graphRef = useRef();
+
+    // Fetch available manuscripts on mount
+    useEffect(() => {
+        const fetchManuscripts = async () => {
+            setLoadingManuscripts(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/graph/manuscripts`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setManuscripts(data.manuscripts || []);
+                    console.log('📚 Available manuscripts:', data.manuscripts);
+
+                    // Auto-select first manuscript if available
+                    if (data.manuscripts?.length > 0) {
+                        setManuscriptId(data.manuscripts[0].manuscript_id);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch manuscripts:', err);
+            } finally {
+                setLoadingManuscripts(false);
+            }
+        };
+        fetchManuscripts();
+    }, []);
 
     const fetchGraphData = async (mid) => {
         if (!mid) return;
@@ -141,14 +168,24 @@ export default function GraphVisualization() {
                     className="bg-white dark:bg-neutral-800 rounded-2xl shadow-lg p-6 mb-6"
                 >
                     <div className="flex items-center space-x-4">
-                        <input
-                            type="text"
-                            placeholder="Enter manuscript ID (e.g., story_the_last_echo)"
+                        {/* Manuscript Dropdown */}
+                        <select
                             value={manuscriptId}
                             onChange={(e) => setManuscriptId(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && fetchGraphData(manuscriptId)}
                             className="flex-1 px-4 py-3 bg-neutral-50 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-neutral-900 dark:text-neutral-100"
-                        />
+                        >
+                            <option value="">
+                                {loadingManuscripts ? 'Loading manuscripts...' :
+                                    manuscripts.length === 0 ? 'No manuscripts found - Write a story first!' :
+                                        'Select a manuscript'}
+                            </option>
+                            {manuscripts.map((m) => (
+                                <option key={m.manuscript_id} value={m.manuscript_id}>
+                                    {m.manuscript_id} ({m.characters} chars, {m.locations} locs, {m.relationships} rels)
+                                </option>
+                            ))}
+                        </select>
+
                         <Button
                             onClick={() => fetchGraphData(manuscriptId)}
                             disabled={!manuscriptId || loading}
@@ -164,6 +201,13 @@ export default function GraphVisualization() {
                             )}
                         </Button>
                     </div>
+
+                    {/* Help text when no manuscripts */}
+                    {!loadingManuscripts && manuscripts.length === 0 && (
+                        <p className="mt-3 text-sm text-amber-600 dark:text-amber-400">
+                            💡 No manuscripts in database. Go to the Manuscript Editor, write some content, and click "Save & Analyze" to extract entities first.
+                        </p>
+                    )}
                 </motion.div>
 
                 {/* Stats */}
@@ -308,22 +352,69 @@ export default function GraphVisualization() {
                                     ctx.fillStyle = '#000';
                                     ctx.fillText(label, node.x, node.y - node.size - fontSize / 2);
                                 }}
-                                linkLabel={link => link.label || link.type || ''}
-                                linkDirectionalArrowLength={4}
-                                linkDirectionalArrowRelPos={1}
-                                linkCurvature={0.1}
-                                linkDirectionalParticles={1}
-                                linkDirectionalParticleWidth={2}
-                                linkDirectionalParticleSpeed={0.005}
+                                // Enhanced edge rendering with visible relationship labels
+                                linkCanvasObjectMode={() => 'after'}
+                                linkCanvasObject={(link, ctx, globalScale) => {
+                                    const start = link.source;
+                                    const end = link.target;
+
+                                    // Skip if positions not ready
+                                    if (typeof start !== 'object' || typeof end !== 'object') return;
+
+                                    // Calculate midpoint for label
+                                    const midX = (start.x + end.x) / 2;
+                                    const midY = (start.y + end.y) / 2;
+
+                                    // Draw relationship label at midpoint
+                                    const label = link.type || link.label || '';
+                                    if (label) {
+                                        const fontSize = Math.max(10 / globalScale, 3);
+                                        ctx.font = `bold ${fontSize}px Sans-Serif`;
+                                        const textWidth = ctx.measureText(label).width;
+
+                                        // Label background
+                                        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                                        ctx.fillRect(
+                                            midX - textWidth / 2 - 2,
+                                            midY - fontSize / 2 - 2,
+                                            textWidth + 4,
+                                            fontSize + 4
+                                        );
+
+                                        // Label border
+                                        ctx.strokeStyle = '#a855f7';
+                                        ctx.lineWidth = 0.5;
+                                        ctx.strokeRect(
+                                            midX - textWidth / 2 - 2,
+                                            midY - fontSize / 2 - 2,
+                                            textWidth + 4,
+                                            fontSize + 4
+                                        );
+
+                                        // Label text
+                                        ctx.textAlign = 'center';
+                                        ctx.textBaseline = 'middle';
+                                        ctx.fillStyle = '#7c3aed';
+                                        ctx.fillText(label, midX, midY);
+                                    }
+                                }}
+                                linkLabel={link => `${link.type}: ${typeof link.source === 'object' ? link.source.name : link.source} → ${typeof link.target === 'object' ? link.target.name : link.target}`}
+                                linkDirectionalArrowLength={6}
+                                linkDirectionalArrowRelPos={0.9}
+                                linkCurvature={0.15}
+                                linkDirectionalParticles={2}
+                                linkDirectionalParticleWidth={4}
+                                linkDirectionalParticleSpeed={0.008}
+                                linkDirectionalParticleColor={() => '#a855f7'}
                                 onNodeClick={handleNodeClick}
                                 onLinkClick={(link) => {
                                     const source = typeof link.source === 'object' ? link.source.name : link.source;
                                     const target = typeof link.target === 'object' ? link.target.name : link.target;
                                     alert(`Relationship: ${link.type}\n\nFrom: ${source}\nTo: ${target}`);
                                 }}
-                                backgroundColor="#f9fafb"
-                                linkColor={() => '#6b7280'}
-                                linkWidth={1.5}
+                                backgroundColor="#1f2937"
+                                linkColor={() => '#a855f7'}
+                                linkWidth={3}
                             />
                         </div>
                     </motion.div>

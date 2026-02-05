@@ -29,8 +29,9 @@ numpy>=1.24.0
 pandas>=2.0.0
 
 # File Processing
-PyPDF2>=3.0.0
+pypdf>=4.0.0
 python-docx>=0.8.11
+httpx>=0.25.0
 
 # Testing & Quality Code (Keep these for the repo's CI/CD)
 pytest==7.4.3

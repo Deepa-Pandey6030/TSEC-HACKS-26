@@ -117,6 +117,10 @@ async def extract_entities(request: NLPExtractionRequest):
             relationships=[RelationshipEntity(**rel) for rel in extracted.get("relationships", [])]
         )
         
+        # 🔥 CRITICAL: Save extracted entities to Neo4j Knowledge Graph
+        from app.services.knowledge_graph.graph_manager import graph_db
+        graph_db.save_extracted_entities(extracted, metadata)
+        
         response_metadata = {
             "processing_time_ms": processing_time_ms,
             "model": "llama-3.1-8b-instant",
