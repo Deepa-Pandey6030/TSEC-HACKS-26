@@ -18,6 +18,10 @@ from app.config import settings
 # CHANGED: Imported the new Deep Logic function
 from llm_judge import evaluate_logic_deeply, extract_entities 
 
+# --- NEW IMPORT FOR THE CRITIC ---
+# Ensure backend/core/orchestrator.py exists as per previous steps
+from core.orchestrator import CriticOrchestrator 
+
 # Load environment variables
 load_dotenv()
 
@@ -233,8 +237,7 @@ app.include_router(grammar_router)
 app.include_router(autocomplete_router)
 app.include_router(nlp_router)
 app.include_router(graph_router)
-app.include_router(manuscript_router)  # Manuscript processing pipeline
-
+app.include_router(manuscript_router)  
 # --- ADDED: ANALYTICS ENDPOINT ---
 @app.get("/analytics")
 async def get_analytics():
@@ -267,6 +270,59 @@ async def validate_chapter(chapter: ChapterInput):
 # --- INCLUDE AUTH ROUTES ---
 from app.api.auth import router as auth_router
 app.include_router(auth_router)
+
+
+# ==============================================================================
+#  NOLAN LITERARY ENGINE INTEGRATION (Added by System)
+# ==============================================================================
+
+class Neo4jAdapter:
+    """
+    A smart bridge that allows the CriticOrchestrator to reuse the 
+    existing 'ContinuityValidator' database connection.
+    """
+    def __init__(self, driver):
+        self.driver = driver
+
+    def query(self, cypher_query, parameters=None):
+        """Matches the interface expected by core/retriever.py"""
+        if not self.driver:
+            raise Exception("Adapter has no active driver")
+        
+        with self.driver.session() as session:
+            result = session.run(cypher_query, parameters or {})
+            # Convert Neo4j records to simple dicts for the Retriever
+            return [dict(record) for record in result]
+
+@app.get("/critique")
+async def get_literary_critique():
+    """
+    Triggers the 'Award-Winning Author' Persona to audit the story DB.
+    """
+    # 1. Check if DB is alive
+    if not hasattr(app.state, "validator") or not app.state.validator.driver:
+         raise HTTPException(status_code=503, detail="Database Unavailable")
+
+    try:
+        logger.info("🧠 Orchestrating Literary Critique...")
+        
+        # 2. Reuse existing connection via Adapter
+        adapter = Neo4jAdapter(app.state.validator.driver)
+        
+        # 3. Instantiate the Orchestrator
+        # (This uses the class we built in backend/core/orchestrator.py)
+        orchestrator = CriticOrchestrator(adapter)
+        
+        # 4. Run the Full Cycle (Data Fetch -> LLM Synthesis)
+        review = orchestrator.generate_literary_critique()
+        
+        return {"review": review}
+
+    except Exception as e:
+        logger.error(f"❌ Critique Generation Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==============================================================================
 
 
 if __name__ == "__main__":
