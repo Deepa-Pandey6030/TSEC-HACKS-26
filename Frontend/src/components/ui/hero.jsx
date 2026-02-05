@@ -7,11 +7,12 @@ import { Button } from './button';
 
 export function Hero({ 
   className,
-  headline = "Design that moves you — interactive, elegant, unforgettable.",
-  subheading = "Experience the future of misinformation detection with TruthShield's autonomous AI ecosystem that protects truth in real-time.",
-  ctaPrimary = "Experience the Magic",
-  ctaSecondary = "Learn More"
-}) {
+  headline = "Explore stories as living knowledge — not static text.",
+  subheading = "Transform manuscripts into intelligent knowledge graphs where characters, locations, and relationships evolve in real time through autonomous AI agents.",
+  ctaPrimary = "Visualize My Graph",
+  ctaSecondary = "How It Works"
+}) 
+ {
   const { isReducedMotion } = useTheme();
   const [displayedText, setDisplayedText] = useState('');
   const [isTypingComplete, setIsTypingComplete] = useState(false);

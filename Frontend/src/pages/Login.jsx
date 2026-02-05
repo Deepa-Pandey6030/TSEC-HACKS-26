@@ -5,38 +5,37 @@ import { LogIn, Mail, Lock, Loader, Shield, Sparkles, Zap, ArrowRight, CheckCirc
 import { login } from '../services/auth';
 import { useAuth } from '../context/AuthContext';
 
-const AnimatedBackground = () => {
-  return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-blue-50 to-purple-50" />
-      <motion.div
-        className="absolute top-1/4 -left-20 w-96 h-96 bg-green-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-        animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute top-1/3 -right-20 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-        animate={{ x: [0, -100, 0], y: [0, 100, 0] }}
-        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute -bottom-32 left-1/3 w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30"
-        animate={{ x: [0, 50, 0], y: [0, -50, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-    </div>
-  );
-};
+const AnimatedBackground = () => (
+  <div className="fixed inset-0 -z-10 overflow-hidden">
+    <div className="absolute inset-0 bg-black" />
+
+    <motion.div
+      className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-600 rounded-full blur-3xl opacity-20"
+      animate={{ x: [0, 120, 0], y: [0, 60, 0] }}
+      transition={{ duration: 20, repeat: Infinity }}
+    />
+    <motion.div
+      className="absolute top-1/3 -right-20 w-96 h-96 bg-blue-600 rounded-full blur-3xl opacity-20"
+      animate={{ x: [0, -120, 0], y: [0, 100, 0] }}
+      transition={{ duration: 25, repeat: Infinity }}
+    />
+    <motion.div
+      className="absolute -bottom-32 left-1/3 w-96 h-96 bg-indigo-600 rounded-full blur-3xl opacity-20"
+      animate={{ x: [0, 60, 0], y: [0, -60, 0] }}
+      transition={{ duration: 22, repeat: Infinity }}
+    />
+  </div>
+);
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
 
-  // Updated login handler with AuthContext
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
@@ -44,17 +43,13 @@ const Login = () => {
 
     try {
       const result = await login(email, password);
-
       if (result.success) {
-        // Store session token and update auth context
         authLogin(result.user, result.token);
-        // Navigate on success
         navigate('/');
       } else {
         setError(result.error || 'Login failed');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Connection failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -62,238 +57,144 @@ const Login = () => {
   };
 
   const benefits = [
-    { icon: <Shield className="h-5 w-5" />, text: "Secure & Encrypted" },
-    { icon: <Sparkles className="h-5 w-5" />, text: "AI-Powered Analytics" },
-    { icon: <Zap className="h-5 w-5" />, text: "Instant Access" }
+    { icon: <Shield className="h-5 w-5" />, text: "Secure Writing Sessions" },
+    { icon: <Sparkles className="h-5 w-5" />, text: "Intelligent Story Analysis" },
+    { icon: <Zap className="h-5 w-5" />, text: "Instant Script Insights" }
   ];
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-20">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-20 text-white">
       <AnimatedBackground />
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        {/* Left Side */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+
+        {/* LEFT */}
         <motion.div
-          initial={{ opacity: 0, x: -50 }}
+          initial={{ opacity: 0, x: -60 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="hidden lg:block"
+          className="hidden lg:block space-y-6"
         >
-          <div className="space-y-6">
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="inline-block p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4"
-            >
-              <LogIn className="h-12 w-12 text-white" />
-            </motion.div>
+          <div className="inline-block p-4 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl">
+            <LogIn className="h-12 w-12 text-white" />
+          </div>
 
-            <h1 className="text-5xl font-bold leading-tight">
-              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent">
-                Welcome Back
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
-                To Your Health Hub
-              </span>
-            </h1>
+          <h1 className="text-5xl font-bold leading-tight">
+            Welcome Back  
+            <br />
+            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              To Your Script Studio
+            </span>
+          </h1>
 
-            <p className="text-xl text-gray-600 leading-relaxed">
-              Continue your journey towards better health with AI-powered insights and personalized recommendations.
-            </p>
+          <p className="text-xl text-neutral-300">
+            Write smarter stories, visualize characters, and track relationships effortlessly.
+          </p>
 
-            <div className="space-y-4 pt-4">
-              {benefits.map((benefit, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                  className="flex items-center space-x-3 backdrop-blur-lg bg-white/30 p-4 rounded-xl border border-white/40"
-                >
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg text-white">
-                    {benefit.icon}
-                  </div>
-                  <span className="text-gray-700 font-medium">{benefit.text}</span>
-                </motion.div>
-              ))}
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="pt-6"
-            >
-              <div className="p-6 backdrop-blur-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-200/50">
-                <div className="flex items-start space-x-3">
-                  <CheckCircle className="h-6 w-6 text-blue-600 flex-shrink-0 mt-1" />
-                  <div>
-                    <p className="font-semibold text-gray-800 mb-1">Your data is safe with us</p>
-                    <p className="text-sm text-gray-600">
-                      We use industry-leading encryption to protect your health information and predictions.
-                    </p>
-                  </div>
+          <div className="space-y-4 pt-4">
+            {benefits.map((b, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 + i * 0.1 }}
+                className="flex items-center space-x-3 bg-white/5 backdrop-blur p-4 rounded-xl border border-white/10"
+              >
+                <div className="p-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg">
+                  {b.icon}
                 </div>
+                <span className="text-neutral-200 font-medium">{b.text}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="pt-6 bg-white/5 backdrop-blur p-6 rounded-xl border border-white/10">
+            <div className="flex space-x-3">
+              <CheckCircle className="h-6 w-6 text-purple-400 mt-1" />
+              <div>
+                <p className="font-semibold">Your stories stay private</p>
+                <p className="text-sm text-neutral-400">
+                  All scripts and graphs are securely stored and protected.
+                </p>
               </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
 
-        {/* Right Side - Login Form */}
+        {/* FORM */}
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
+          initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="w-full"
         >
-          <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-8 lg:p-10">
-            <div className="lg:hidden text-center mb-8">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="inline-block p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl mb-4"
-              >
-                <LogIn className="h-8 w-8 text-white" />
-              </motion.div>
-            </div>
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 lg:p-10">
 
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Sign In
-              </h2>
-              <p className="text-gray-600">Access your personalized health dashboard</p>
-            </div>
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+              Sign In
+            </h2>
+            <p className="text-neutral-400 mb-8">
+              Access your smart writing workspace
+            </p>
 
             <form onSubmit={handleLogin} className="space-y-5">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
+
+              <div>
+                <label className="font-semibold text-neutral-300 mb-2 block">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                   <input
                     type="email"
-                    placeholder="admin@gdg.com"
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/70 backdrop-blur-sm hover:bg-white/90"
+                    className="w-full pl-12 py-3 rounded-xl bg-black border border-white/10 focus:ring-2 focus:ring-purple-500 text-white"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                     required
                   />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200" />
+              <div>
+                <label className="font-semibold text-neutral-300 mb-2 block">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
                   <input
                     type="password"
-                    placeholder="••••••••"
-                    className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white/70 backdrop-blur-sm hover:bg-white/90"
+                    className="w-full pl-12 py-3 rounded-xl bg-black border border-white/10 focus:ring-2 focus:ring-purple-500 text-white"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={e => setPassword(e.target.value)}
                     required
                   />
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="flex items-center justify-end"
-              >
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-blue-600 hover:text-purple-600 font-medium transition-colors duration-200"
-                >
-                  Forgot password?
-                </Link>
-              </motion.div>
-
-              {/* Error Message is already handled by your state */}
               {error && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 text-sm font-medium"
-                >
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl">
                   {error}
-                </motion.div>
+                </div>
               )}
 
               <motion.button
                 type="submit"
                 disabled={isLoading}
-                whileHover={{ scale: isLoading ? 1 : 1.02 }}
-                whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white px-6 py-4 rounded-xl font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 group"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-gradient-to-r from-purple-500 to-blue-500 py-4 rounded-xl font-semibold flex justify-center gap-2"
               >
-                {isLoading ? (
-                  <>
-                    <Loader className="h-5 w-5 animate-spin" />
-                    <span>Signing In...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
-                  </>
-                )}
+                {isLoading ? <Loader className="animate-spin" /> : "Enter Studio"}
+                {!isLoading && <ArrowRight />}
               </motion.button>
             </form>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="mt-8 text-center"
-            >
-              <p className="text-gray-600 text-sm">
-                Don't have an account?{' '}
-                <Link
-                  to="/signup"
-                  className="text-blue-600 hover:text-purple-600 font-semibold transition-colors duration-200 inline-flex items-center space-x-1"
-                >
-                  <span>Sign up here</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </p>
-            </motion.div>
+            <p className="mt-8 text-center text-neutral-400 text-sm">
+              New here?{" "}
+              <Link to="/signup" className="text-purple-400 font-semibold">
+                Create account →
+              </Link>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="mt-8"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white/50 backdrop-blur-sm text-gray-500 rounded-full">
-                    Secure Login
-                  </span>
-                </div>
-              </div>
-            </motion.div>
+            <div className="mt-8 text-center text-xs text-neutral-500">
+              Private & Secure Workspace
+            </div>
+
           </div>
         </motion.div>
       </div>
