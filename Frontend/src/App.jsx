@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 // Added FileCheck for the validator icon
-<<<<<<< Updated upstream
-import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles, Network, BookOpen } from 'lucide-react';
-=======
-import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles, Network ,SearchCheck } from 'lucide-react';
->>>>>>> Stashed changes
+
+
+
+import { Home, LayoutDashboard, Package, LogIn, UserPlus, LogOut, User, FileCheck, Sparkles, Network ,SearchCheck, BookOpen } from 'lucide-react';
+
 import { ThemeProvider, useTheme } from './lib/theme-provider';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HomePage } from './pages/home';
@@ -21,11 +21,8 @@ import AIChat from './components/AIChat';
 import { Button } from './components/ui/button';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import ContinuityValidator from './pages/ContinuityValidator';
-<<<<<<< Updated upstream
 import ManuscriptPage from './pages/ManuscriptPage';
-=======
 import Critique from './pages/Critique';
->>>>>>> Stashed changes
 import './utils/authDebug'; // Load auth test functions
 
 function Navigation({ isAutocompleteEnabled, setIsAutocompleteEnabled }) {
