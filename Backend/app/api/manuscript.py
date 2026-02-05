@@ -73,6 +73,14 @@ class TextSubmitRequest(BaseModel):
     text: str = Field(..., min_length=10)
 
 
+class SaveAnalyzeRequest(BaseModel):
+    """Request for save-and-analyze workflow."""
+    title: str = Field(..., min_length=1, max_length=500)
+    text: str = Field(..., min_length=10)
+    chapter: int = Field(default=1, ge=1)
+    paragraph: int = Field(default=1, ge=1)
+
+
 # Endpoints
 
 @router.post("/upload", response_model=ManuscriptUploadResponse)
@@ -144,6 +152,86 @@ async def upload_manuscript(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Manuscript processing failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+
+@router.post("/save-and-analyze", response_model=ManuscriptUploadResponse)
+async def save_and_analyze(request: SaveAnalyzeRequest):
+    """
+    Save manuscript and generate AI summary in a single atomic operation.
+    
+    This is the primary endpoint for the manuscript editor's "Save & Analyze" button.
+    
+    Workflow:
+    1. Save manuscript text to MongoDB (without summary)
+    2. Generate AI summary using LLM
+    3. Update manuscript with generated summary
+    4. Return complete manuscript data including summary
+    
+    - **title**: Manuscript title
+    - **text**: Manuscript content
+    - **chapter**: Chapter number
+    - **paragraph**: Paragraph number
+    """
+    try:
+        repository = get_manuscript_repository()
+        
+        # Calculate word count
+        word_count = len(request.text.split())
+        
+        # Step 1: Save manuscript to MongoDB first (without summary)
+        logger.info(f"📝 Saving manuscript: {request.title}")
+        manuscript = repository.create(
+            title=request.title,
+            original_text=request.text,
+            summary="",  # Empty initially
+            word_count=word_count,
+            model_used="",  # Will be updated after summarization
+            chapter=request.chapter,
+            paragraph=request.paragraph,
+        )
+        
+        manuscript_id = manuscript["id"]
+        logger.info(f"✅ Manuscript saved with ID: {manuscript_id}")
+        
+        # Step 2: Generate AI summary
+        logger.info(f"🤖 Generating summary for manuscript {manuscript_id}")
+        from app.services.manuscript.summarizer import get_summarizer
+        
+        summarizer = get_summarizer(provider="groq")
+        summary = await summarizer.summarize(
+            text=request.text,
+            context=f"Manuscript: {request.title}"
+        )
+        
+        model_used = summarizer.model_name
+        logger.info(f"✨ Summary generated using {model_used}")
+        
+        # Step 3: Update manuscript with summary
+        success = repository.update_summary(manuscript_id, summary)
+        if not success:
+            logger.warning(f"⚠️ Failed to update summary for {manuscript_id}")
+        
+        # Step 4: Update model_used field
+        repository.collection.update_one(
+            {"_id": manuscript_id},
+            {"$set": {"model_used": model_used}}
+        )
+        
+        # Return complete data
+        return ManuscriptUploadResponse(
+            id=manuscript_id,
+            title=request.title,
+            summary=summary,
+            word_count=word_count,
+            model_used=model_used,
+            message="Manuscript saved and analyzed successfully"
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Save-and-analyze failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
 

@@ -1,13 +1,10 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback } from "react";
 import { useStoryStore } from "../store";
 import { useWebSocket } from "../hooks/useWebSocket";
 
 export const ManuscriptEditor = ({ manuscriptId }) => {
-    const { manuscript, updateContent, processing, isConnected, entities } = useStoryStore();
+    const { manuscript, updateContent, processing, isConnected, entities, setSavedManuscript, setProcessing } = useStoryStore();
     const { sendParagraph } = useWebSocket(manuscriptId);
-
-    // 1. NEW: Ref to track the last text we successfully sent to the backend
-    const lastAnalyzedText = useRef("");
 
     const handleChange = useCallback(
         (e) => {
@@ -16,41 +13,59 @@ export const ManuscriptEditor = ({ manuscriptId }) => {
         [updateContent]
     );
 
-    const handleSave = useCallback(() => {
+    const handleSave = useCallback(async () => {
         const currentText = manuscript.content.trim();
 
-        // 2. SAFETY CHECK: Don't send if empty, already processing, or SAME as last time
+        // Safety check: Don't send if empty or already processing
         if (!currentText || processing) return;
 
-        if (currentText === lastAnalyzedText.current) {
-            console.log("⚠️ Skipping duplicate analysis");
-            return;
+        console.log("📤 Saving and analyzing manuscript...");
+        setProcessing(true);
+
+        try {
+            const response = await fetch('http://localhost:8000/api/v1/manuscript/save-and-analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: manuscript.title,
+                    text: currentText,
+                    chapter: manuscript.chapter,
+                    paragraph: manuscript.paragraph,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log("✅ Manuscript saved and analyzed:", data);
+
+            // Update saved manuscript state
+            setSavedManuscript({
+                id: data.id,
+                title: data.title,
+                content: currentText,
+                summary: data.summary,
+                savedAt: new Date().toISOString(),
+            });
+
+            // Also trigger NLP extraction for entity sidebar
+            sendParagraph(
+                currentText,
+                manuscript.chapter,
+                manuscript.paragraph
+            );
+
+        } catch (error) {
+            console.error("❌ Save and analyze failed:", error);
+        } finally {
+            setProcessing(false);
         }
+    }, [manuscript, processing, setSavedManuscript, setProcessing, sendParagraph]);
 
-        console.log("📤 Sending paragraph for processing...");
-
-        // Update the ref so we know this text is "clean"
-        lastAnalyzedText.current = currentText;
-
-        sendParagraph(
-            currentText,
-            manuscript.chapter,
-            manuscript.paragraph
-        );
-    }, [manuscript.content, manuscript.chapter, manuscript.paragraph, processing, sendParagraph]);
-
-    // 3. AUTO-SAVE LOGIC (Debounced)
-    useEffect(() => {
-        // Only set the timer if there is content and we aren't currently working
-        if (!manuscript.content.trim() || processing) return;
-
-        const timer = setTimeout(() => {
-            // Trigger save logic (which now includes the duplicate check)
-            handleSave();
-        }, 2000);
-
-        return () => clearTimeout(timer);
-    }, [manuscript.content, processing, handleSave]);
 
     return (
         <div className="manuscript-editor bg-white p-6 rounded-lg shadow-sm h-full flex flex-col">

@@ -18,6 +18,15 @@ export const useStoryStore = create((set) => ({
     // Connection state (for UI feedback)
     isConnected: true,
 
+    // Saved manuscript state (persisted to backend)
+    savedManuscript: {
+        id: null,
+        title: '',
+        content: '',
+        summary: '',
+        savedAt: null,
+    },
+
     // Actions
     updateContent: (content) =>
         set((state) => ({
@@ -47,6 +56,8 @@ export const useStoryStore = create((set) => ({
         })),
 
     setProcessing: (processing) => set({ processing }),
+
+    setSavedManuscript: (data) => set({ savedManuscript: data }),
 
     setConnected: (isConnected) => set({ isConnected }),
 

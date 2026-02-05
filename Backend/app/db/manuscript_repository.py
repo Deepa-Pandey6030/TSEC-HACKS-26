@@ -58,11 +58,13 @@ class ManuscriptRepository:
         self,
         title: str,
         original_text: str,
-        summary: str,
-        word_count: int,
-        model_used: str,
+        summary: str = "",
+        word_count: int = 0,
+        model_used: str = "",
         file_type: Optional[str] = None,
-        file_name: Optional[str] = None
+        file_name: Optional[str] = None,
+        chapter: Optional[int] = None,
+        paragraph: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Create a new manuscript document.
@@ -70,24 +72,30 @@ class ManuscriptRepository:
         Args:
             title: Document title
             original_text: Full extracted text
-            summary: AI-generated summary
+            summary: AI-generated summary (optional, can be added later)
             word_count: Number of words in original text
             model_used: LLM model used for summarization
             file_type: Original file format (pdf, docx, txt)
             file_name: Original filename
+            chapter: Chapter number (optional)
+            paragraph: Paragraph number (optional)
             
         Returns:
             Created document with string ID
         """
+        now = datetime.now(timezone.utc)
         document = {
             "title": title,
             "original_text": original_text,
             "summary": summary,
             "word_count": word_count,
-            "created_at": datetime.now(timezone.utc),
+            "created_at": now,
+            "updated_at": now,
             "model_used": model_used,
             "file_type": file_type,
             "file_name": file_name,
+            "chapter": chapter,
+            "paragraph": paragraph,
         }
         
         try:
@@ -174,6 +182,35 @@ class ManuscriptRepository:
         except Exception as e:
             logger.error(f"Failed to count manuscripts: {e}")
             return 0
+    
+    def update_summary(self, manuscript_id: str, summary: str) -> bool:
+        """
+        Update the summary of an existing manuscript.
+        
+        Args:
+            manuscript_id: String representation of MongoDB ObjectId
+            summary: AI-generated summary to store
+            
+        Returns:
+            True if updated successfully, False otherwise
+        """
+        try:
+            result = self.collection.update_one(
+                {"_id": ObjectId(manuscript_id)},
+                {
+                    "$set": {
+                        "summary": summary,
+                        "updated_at": datetime.now(timezone.utc)
+                    }
+                }
+            )
+            if result.modified_count > 0:
+                logger.info(f"✅ Summary updated for manuscript: {manuscript_id}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Failed to update summary for {manuscript_id}: {e}")
+            return False
     
     def delete(self, manuscript_id: str) -> bool:
         """
