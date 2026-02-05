@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { ManuscriptEditor } from '../components/Manuscripteditor';
+import { SummaryCard } from '../components/SummaryCard';
 import { EntitySidebar } from '../components/Entitysidebar';
 
 export default function ManuscriptPage() {
@@ -51,6 +52,16 @@ export default function ManuscriptPage() {
                     <div className="lg:col-span-1 bg-white dark:bg-neutral-800 rounded-2xl shadow-lg overflow-hidden">
                         <EntitySidebar onEntityClick={handleEntityClick} />
                     </div>
+                </motion.div>
+
+                {/* Summary Card Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-6"
+                >
+                    <SummaryCard />
                 </motion.div>
 
                 {/* Info Card */}

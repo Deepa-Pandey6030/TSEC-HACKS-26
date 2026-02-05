@@ -1,0 +1,44 @@
+Character Voice Analysis for: Maya
+Generated: 20260205_013439
+================================================================================
+
+```json
+{
+  "scene_emotion_analysis": {
+    "primary_emotion": "surprise/happiness",
+    "emotional_intensity": 8,
+    "emotional_transitions": ["shock", "delight", "laughter", "emotional crying"],
+    "subtext_and_underlying_feelings": "gratitude, love, excitement"
+  },
+  "voice_adjustments": {
+    "pitch_modifications": "up",
+    "pace_adjustments": "faster",
+    "energy_level_changes": "higher",
+    "volume_adjustments": "louder",
+    "tone_shifts": "brighter"
+  },
+  "delivery_directions": {
+    "specific_lines": ["Gasps in surprise", "Squeals with delight", "Laughs mixed with crying"],
+    "emphasis": ["On the surprise and joy", "On the gratitude and love"],
+    "pauses": ["After the initial gasp", "Before bursting into laughter"],
+    "modulation": ["From shock to delight", "From laughter to emotional crying"],
+    "special_vocal_effects": ["Giggle", "Sighs of happiness"]
+  },
+  "emotional_coloring": {
+    "how_to_express_emotion": "Through pitch, pace, volume, and tone adjustments",
+    "contrast_with_normal_state": "More subdued at the beginning, building up to a more expressive and vibrant tone",
+    "building_or_releasing_tension": "Building up to the surprise, then releasing with laughter and tears"
+  },
+  "tts_markup": {
+    "ssml_tags": ["emphasis", "break", "prosody"],
+    "prosody_settings": ["varied pitch and volume", "fast pace with occasional pauses"],
+    "emotion_tags": ["happy", "excited", "surprised"],
+    "break_and_pause_placements": ["After the initial surprise", "Before the laughter"]
+  },
+  "performance_notes": {
+    "key_moments": ["The initial surprise", "The transition to laughter and tears"],
+    "character_consistency_reminders": ["Maintain Maya's bubbly and optimistic personality", "Ensure the surprise and happiness are authentic and spontaneous"],
+    "pitfalls_to_avoid": ["Overdoing the surprise", "Underplaying the emotional release"]
+  }
+}
+```

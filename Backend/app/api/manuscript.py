@@ -10,13 +10,16 @@ Endpoints:
 - DELETE /api/v1/manuscript/{id} - Delete a manuscript
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Query, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
+from pathlib import Path
 import logging
 
 from app.services.manuscript import ManuscriptProcessor
 from app.db.manuscript_repository import get_manuscript_repository
+from app.api.dependencies import get_current_user
+from bson.objectid import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,24 @@ class SaveAnalyzeRequest(BaseModel):
     text: str = Field(..., min_length=10)
     chapter: int = Field(default=1, ge=1)
     paragraph: int = Field(default=1, ge=1)
+
+
+class SummaryResponse(BaseModel):
+    """Response for summary retrieval."""
+    id: str
+    title: str
+    summary: str
+    created_at: str
+    word_count: int
+    chapter: Optional[int] = None
+    paragraph: Optional[int] = None
+
+
+class VoiceResponse(BaseModel):
+    """Response for voice generation."""
+    audio_url: str
+    duration: float
+    voice_id: str
 
 
 # Endpoints
@@ -156,7 +177,10 @@ async def upload_manuscript(
 
 
 @router.post("/save-and-analyze", response_model=ManuscriptUploadResponse)
-async def save_and_analyze(request: SaveAnalyzeRequest):
+async def save_and_analyze(
+    request: SaveAnalyzeRequest,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Save manuscript and generate AI summary in a single atomic operation.
     
@@ -180,7 +204,7 @@ async def save_and_analyze(request: SaveAnalyzeRequest):
         word_count = len(request.text.split())
         
         # Step 1: Save manuscript to MongoDB first (without summary)
-        logger.info(f"📝 Saving manuscript: {request.title}")
+        logger.info(f"📝 Saving manuscript: {request.title} for user: {current_user['email']}")
         manuscript = repository.create(
             title=request.title,
             original_text=request.text,
@@ -189,6 +213,7 @@ async def save_and_analyze(request: SaveAnalyzeRequest):
             model_used="",  # Will be updated after summarization
             chapter=request.chapter,
             paragraph=request.paragraph,
+            user_id=current_user["id"],
         )
         
         manuscript_id = manuscript["id"]
@@ -363,3 +388,148 @@ async def health_check():
         return {"status": "healthy", "manuscript_count": count}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
+
+
+@router.get("/summaries/latest", response_model=SummaryResponse)
+async def get_latest_summary(current_user: dict = Depends(get_current_user)):
+    """
+    Get the most recent summary for the logged-in user.
+    User-scoped query ensures data isolation.
+    """
+    try:
+        repository = get_manuscript_repository()
+        
+        # Query: user_id match + has summary + sort by created_at desc + limit 1
+        manuscript = repository.collection.find_one(
+            {"user_id": current_user["id"], "summary": {"$ne": ""}},
+            sort=[("created_at", -1)]
+        )
+        
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="No summaries found")
+        
+        created_at = manuscript.get("created_at")
+        if created_at:
+            created_at = created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at)
+        
+        return SummaryResponse(
+            id=str(manuscript["_id"]),
+            title=manuscript["title"],
+            summary=manuscript["summary"],
+            created_at=created_at or "",
+            word_count=manuscript["word_count"],
+            chapter=manuscript.get("chapter"),
+            paragraph=manuscript.get("paragraph")
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching latest summary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch summary")
+
+
+@router.get("/summaries", response_model=List[SummaryResponse])
+async def get_user_summaries(
+    limit: int = Query(10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get all summaries for the logged-in user (paginated).
+    """
+    try:
+        repository = get_manuscript_repository()
+        
+        cursor = repository.collection.find(
+            {"user_id": current_user["id"], "summary": {"$ne": ""}},
+            sort=[("created_at", -1)],
+            limit=limit
+        )
+        
+        results = []
+        for m in cursor:
+            created_at = m.get("created_at")
+            if created_at:
+                created_at = created_at.isoformat() if hasattr(created_at, 'isoformat') else str(created_at)
+            
+            results.append(SummaryResponse(
+                id=str(m["_id"]),
+                title=m["title"],
+                summary=m["summary"],
+                created_at=created_at or "",
+                word_count=m["word_count"],
+                chapter=m.get("chapter"),
+                paragraph=m.get("paragraph")
+            ))
+        
+        return results
+    except Exception as e:
+        logger.error(f"Error fetching summaries: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to fetch summaries")
+
+
+@router.post("/summaries/{summary_id}/generate-voice", response_model=VoiceResponse)
+async def generate_summary_voice(
+    summary_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Generate TTS audio for a summary.
+    Ensures user owns the summary before generating voice.
+    """
+    try:
+        from tools.google_tts import GoogleTTS
+        
+        repository = get_manuscript_repository()
+        
+        # Verify ownership - security check
+        manuscript = repository.collection.find_one({
+            "_id": ObjectId(summary_id),
+            "user_id": current_user["id"]  # Must match logged-in user
+        })
+        
+        if not manuscript:
+            raise HTTPException(status_code=404, detail="Summary not found or access denied")
+        
+        summary_text = manuscript.get("summary", "")
+        if not summary_text:
+            raise HTTPException(status_code=400, detail="No summary available")
+        
+        # Generate voice using edge-tts
+        logger.info(f"🔊 Generating voice for summary {summary_id}")
+        tts = GoogleTTS()
+        audio_path = tts.synthesize_speech(
+            text=summary_text,
+            character_name=f"summary_{summary_id}",
+            voice_profile=None  # Use default voice
+        )
+        
+        # Store voice metadata
+        repository.collection.update_one(
+            {"_id": ObjectId(summary_id)},
+            {
+                "$set": {
+                    "voice_meta": {
+                        "audio_path": audio_path,
+                        "voice_id": "en-US-AriaNeural",
+                        "language": "en-US",
+                        "duration": 0.0
+                    }
+                }
+            }
+        )
+        
+        # Return relative URL for frontend
+        audio_filename = Path(audio_path).name
+        audio_url = f"/audio/{audio_filename}"
+        
+        logger.info(f"✅ Voice generated: {audio_url}")
+        return VoiceResponse(
+            audio_url=audio_url,
+            duration=0.0,
+            voice_id="en-US-AriaNeural"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Voice generation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to generate voice")

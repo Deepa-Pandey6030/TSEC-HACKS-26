@@ -50,6 +50,10 @@ class ManuscriptRepository:
             self.collection.create_index("created_at", background=True)
             # Text index on title for search
             self.collection.create_index([("title", "text")], background=True)
+            # Index on user_id for user-scoped queries
+            self.collection.create_index("user_id", background=True)
+            # Compound index for user + recency
+            self.collection.create_index([("user_id", 1), ("created_at", -1)], background=True)
             logger.debug("Manuscript indexes ensured")
         except Exception as e:
             logger.warning(f"Index creation warning: {e}")
@@ -64,7 +68,8 @@ class ManuscriptRepository:
         file_type: Optional[str] = None,
         file_name: Optional[str] = None,
         chapter: Optional[int] = None,
-        paragraph: Optional[int] = None
+        paragraph: Optional[int] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Create a new manuscript document.
@@ -96,6 +101,7 @@ class ManuscriptRepository:
             "file_name": file_name,
             "chapter": chapter,
             "paragraph": paragraph,
+            "user_id": user_id,
         }
         
         try:

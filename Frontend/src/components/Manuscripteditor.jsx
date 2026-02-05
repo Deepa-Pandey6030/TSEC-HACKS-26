@@ -23,11 +23,21 @@ export const ManuscriptEditor = ({ manuscriptId }) => {
         setProcessing(true);
 
         try {
+            // Get token from localStorage (AuthContext stores it there)
+            const token = localStorage.getItem('sessionToken');
+
+            const headers = {
+                'Content-Type': 'application/json',
+            };
+
+            // Add auth header if token exists
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const response = await fetch('http://localhost:8000/api/v1/manuscript/save-and-analyze', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers,
                 body: JSON.stringify({
                     title: manuscript.title,
                     text: currentText,

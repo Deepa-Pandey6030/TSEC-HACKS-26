@@ -1,0 +1,54 @@
+Character Voice Analysis for: Maya
+Generated: 20260205_010501
+================================================================================
+
+```json
+{
+    "scene_emotion_analysis": {
+        "primary_emotion": "surprise/happiness",
+        "emotional_intensity": 8,
+        "emotional_transitions": ["shock", "delight", "emotional release"],
+        "subtext_and_underlying_feelings": ["gratitude", "love"]
+    },
+    "voice_adjustments": {
+        "pitch_modifications": "up",
+        "pace_adjustments": "faster",
+        "energy_level_changes": "higher",
+        "volume_adjustments": "louder",
+        "tone_shifts": "brighter"
+    },
+    "delivery_directions": {
+        "specific_lines_or_moments": [
+            {"line": "initial reaction", "direction": "breathless, shocked"},
+            {"line": "letting out a little squeal of delight", "direction": "high-pitched, excited"},
+            {"line": "bursting into laughter mixed with emotional crying", "direction": "uncontrollable, joyful"}
+        ],
+        "emphasis": "on the surprise and delight",
+        "pauses": "before reacting, to convey shock",
+        "modulation": "to convey the emotional release",
+        "special_vocal_effects": ["giggle", "sighs", "happy tears"]
+    },
+    "emotional_coloring": {
+        "how_emotion_should_color_the_voice": "with a bright, excited tone",
+        "contrast_with_character's_normal_state": "heightened emotional expressiveness",
+        "building_or_releasing_emotional_tension": "releasing, as the surprise and delight take over"
+    },
+    "tts_markup": {
+        "ssml_tags_to_use": ["emphasis", "prosody"],
+        "prosody_settings": {
+            "rate": "variable",
+            "pitch": "variable",
+            "volume": "variable"
+        },
+        "emotion_markup": {
+            "happy": 0.7,
+            "excited": 0.3
+        }
+    },
+    "performance_notes": {
+        "key_moments_that_need_special_attention": ["initial reaction", "letting out a little squeal of delight"],
+        "character_consistency_reminders": ["maintain a bright, cheerful tone"],
+        "pitfalls_to_avoid": ["overdoing the emotional release", "losing the character's core personality"]
+    }
+}
+```

@@ -1,0 +1,89 @@
+Character Voice Analysis for: Maya
+Generated: 20260205_023229
+================================================================================
+
+```
+{
+    "base_voice_characteristics": {
+        "pitch": "high",
+        "tone_quality": "bright",
+        "pace": "fast",
+        "volume": "moderate",
+        "resonance": "clear"
+    },
+    "emotional_baseline": {
+        "default_emotional_coloring": "happy",
+        "emotional_expressiveness_level": 8,
+        "common_emotional_states": ["excitement", "playfulness", "affection"]
+    },
+    "modulation_patterns": {
+        "happiness": {
+            "pitch": "up",
+            "pace": "faster",
+            "volume": "louder"
+        },
+        "sadness": {
+            "pitch": "down",
+            "pace": "slower",
+            "volume": "softer"
+        },
+        "excitement": {
+            "pitch": "up",
+            "pace": "faster",
+            "volume": "louder"
+        },
+        "anger": {
+            "pitch": "down",
+            "pace": "faster",
+            "volume": "louder"
+        },
+        "fear": {
+            "pitch": "up",
+            "pace": "faster",
+            "volume": "softer"
+        },
+        "surprise": {
+            "pitch": "up",
+            "pace": "faster",
+            "volume": "louder"
+        }
+    },
+    "special_characteristics": {
+        "laugh_type": "giggle",
+        "laugh_frequency": "frequent",
+        "sigh_patterns": "rare",
+        "breathing_patterns": "rapid",
+        "vocal_fry": "none",
+        "uptalk": "occasional",
+        "accent": "none"
+    },
+    "emphasis_patterns": {
+        "word_emphasis": "elongated vowels",
+        "sentence_inflection": "rising",
+        "question_intonation": "rising",
+        "exclamation_patterns": "emphatic"
+    },
+    "tts_configuration": {
+        "pitch": "+10%",
+        "speed": "120%",
+        "energy": "80%",
+        "ssml_tags": ["emphasis", "break"],
+        "emotion_tags": ["happy", "excited", "playful"],
+        "prosody_recommendations": ["vary pitch and pace for emotional expression"]
+    },
+    "example_deliveries": [
+        {
+            "sentence": "Oh my gosh, that's amaaazing!",
+            "markup": "<emphasis>amaaazing</emphasis>"
+        },
+        {
+            "sentence": "I'm so excited for the party tonight!",
+            "markup": "<break strength='strong'/>"
+        },
+        {
+            "sentence": "I love spending time with my friends, it's always so much fun!",
+            "markup": "<prosody rate='120%'/>"
+        }
+    ]
+}
+```

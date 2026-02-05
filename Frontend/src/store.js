@@ -27,6 +27,10 @@ export const useStoryStore = create((set) => ({
         savedAt: null,
     },
 
+    // Auth state (synced with AuthContext)
+    user: null,
+    token: null,
+
     // Actions
     updateContent: (content) =>
         set((state) => ({
@@ -58,6 +62,21 @@ export const useStoryStore = create((set) => ({
     setProcessing: (processing) => set({ processing }),
 
     setSavedManuscript: (data) => set({ savedManuscript: data }),
+
+    setUser: (user) => set({ user }),
+    setToken: (token) => set({ token }),
+
+    logout: () => set({
+        user: null,
+        token: null,
+        savedManuscript: {
+            id: null,
+            title: '',
+            content: '',
+            summary: '',
+            savedAt: null,
+        }
+    }),
 
     setConnected: (isConnected) => set({ isConnected }),
 

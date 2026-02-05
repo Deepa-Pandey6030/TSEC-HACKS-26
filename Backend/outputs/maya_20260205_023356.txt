@@ -1,0 +1,93 @@
+Character Voice Analysis for: Maya
+Generated: 20260205_023356
+================================================================================
+
+```json
+{
+  "base_voice_characteristics": {
+    "pitch": "high",
+    "tone_quality": "bright",
+    "pace": "fast",
+    "volume": "moderate",
+    "resonance": "medium"
+  },
+  "emotional_baseline": {
+    "default_emotional_coloring": "upbeat",
+    "emotional_expressiveness_level": 8,
+    "common_emotional_states": ["happiness", "excitement", "playfulness"]
+  },
+  "modulation_patterns": {
+    "happiness": {
+      "pitch": "up",
+      "pace": "faster",
+      "volume": "louder"
+    },
+    "sadness": {
+      "pitch": "down",
+      "pace": "slower",
+      "volume": "softer"
+    },
+    "excitement": {
+      "pitch": "up",
+      "pace": "faster",
+      "volume": "louder"
+    },
+    "anger": {
+      "pitch": "up",
+      "pace": "faster",
+      "volume": "louder"
+    },
+    "fear": {
+      "pitch": "up",
+      "pace": "faster",
+      "volume": "softer"
+    },
+    "surprise": {
+      "pitch": "up",
+      "pace": "faster",
+      "volume": "louder"
+    }
+  },
+  "special_characteristics": {
+    "laugh_type": "giggle",
+    "laugh_frequency": "frequent",
+    "sigh_patterns": "rare",
+    "breathing_patterns": "normal",
+    "vocal_fry": "none",
+    "uptalk": "occasional",
+    "accent": "none",
+    "dialect": "casual"
+  },
+  "emphasis_patterns": {
+    "word_emphasis": "elongated words",
+    "sentence_inflection": "rising and falling",
+    "question_intonation": "rising",
+    "exclamation_patterns": "frequent"
+  },
+  "tts_configuration": {
+    "pitch": "+10%",
+    "speed": "1.2",
+    "energy": "high",
+    "ssml_tags": ["emphasis", "prosody"],
+    "emotion_tags": ["happiness", "excitement"],
+    "prosody_recommendations": ["rising and falling pitch", "elongated words"]
+  },
+  "example_deliveries": [
+    {
+      "sentence": "I'm so excited to be here!",
+      "markup": "<emphasis>excited</emphasis>",
+      "emotional_state": "excitement"
+    },
+    {
+      "sentence": "Oh no, I'm so sorry!",
+      "markup": "<prosody rate='0.8'>sorry</prosody>",
+      "emotional_state": "sadness"
+    },
+    {
+      "sentence": "This is amazing!",
+      "markup": "<emphasis>amazing</emphasis>",
+      "emotional_state": "happiness"
+    }
+  ]
+}
+```
